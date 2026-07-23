@@ -1,8 +1,3 @@
-"""Implement `nlopt` algorithms.
-
-The documentation is heavily based on (nlopt documentation)[nlopt.readthedocs.io].
-
-"""
 
 from dataclasses import dataclass
 
@@ -844,9 +839,7 @@ def _internal_to_nlopt_constaint(c):
         tol = np.tile(tol, c["n_constr"])
 
     def _constraint(result, x, grad):
-        result[:] = -c["fun"](x)  # see docstring for sign flip
-        if grad.size > 0:
-            grad[:] = -c["jac"](x)  # see docstring for sign flip
+        pass
 
     new_constr = {
         "fun": _constraint,

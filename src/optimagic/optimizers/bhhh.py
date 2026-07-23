@@ -1,4 +1,3 @@
-"""Implement Berndt-Hall-Hall-Hausman (BHHH) algorithm."""
 
 from dataclasses import dataclass
 from typing import Callable, cast
@@ -32,7 +31,6 @@ from optimagic.typing import AggregationLevel, NonNegativeFloat, PositiveInt
 @dataclass(frozen=True)
 class BHHH(Algorithm):
     converence_gtol_abs: NonNegativeFloat = 1e-8
-    # TODO: Why is this 200?
     stopping_maxiter: PositiveInt = 200
 
     def _solve_internal_problem(
@@ -89,28 +87,22 @@ def bhhh_internal(
         x_candidate = x_accepted + step_size * direction
         criterion_candidate, gradient = fun_and_jac(x_candidate)
 
-        # If previous step was accepted
         if step_size == initial_step_size:
             hessian_approx = np.dot(gradient.T, gradient)
 
         else:
             criterion_candidate, gradient = fun_and_jac(x_candidate)
 
-        # Line search
         if np.sum(criterion_candidate) > np.sum(criterion_accepted):
             step_size /= 2
 
             if step_size <= 0.01:
-                # Accept step
                 x_accepted = x_candidate
                 criterion_accepted = criterion_candidate
 
-                # Reset step size
                 step_size = initial_step_size
 
-        # If decrease in likelihood, calculate new direction vector
         else:
-            # Accept step
             x_accepted = x_candidate
             criterion_accepted = criterion_candidate
 
@@ -122,7 +114,6 @@ def bhhh_internal(
                 hessian_approx = np.dot(gradient.T, gradient)
                 direction = np.linalg.solve(hessian_approx, gradient_sum)
 
-            # Reset stepsize
             step_size = initial_step_size
 
         if gtol < gtol_abs:

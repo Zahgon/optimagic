@@ -30,15 +30,6 @@ from optimagic.logging.types import (
 
 
 class SQLAlchemyConfig:
-    """Configuration class for setting up an SQLAlchemy engine and metadata.
-
-    This class manages the connection URL, engine creation, and metadata reflection
-    for an SQLAlchemy database connection.
-
-    Args:
-        url: The database URL to connect to.
-
-    """
 
     def __init__(
         self,
@@ -48,56 +39,18 @@ class SQLAlchemyConfig:
 
     @cached_property
     def metadata(self) -> MetaData:
-        """Get the metadata object.
-
-        Returns:
-            The SQLAlchemy MetaData object reflecting the database schema.
-
-        """
-        engine = self.create_engine()
-        metadata = MetaData()
-        self._configure_reflect()
-        metadata.reflect(engine)
-        return metadata
+        pass
 
     def create_engine(self) -> Engine:
-        """Create and return an SQLAlchemy engine.
-
-        Returns:
-            An SQLAlchemy Engine object.
-
-        """
-        return sql.create_engine(self.url)
+        pass
 
     @staticmethod
     def _configure_reflect() -> None:
-        """Mark all BLOB dtypes as PickleType with our custom pickle reader.
-
-        Code ist taken from the documentation: https://tinyurl.com/y7q287jr
-
-        """
-
-        @sql.event.listens_for(sql.Table, "column_reflect")
-        def _setup_pickletype(
-            inspector: Any, table: sql.Table, column_info: dict[str, Any]
-        ) -> None:  # noqa: ARG001
-            if isinstance(column_info["type"], sql.BLOB):
-                column_info["type"] = sql.PickleType(pickler=RobustPickler)  # type:ignore
+        pass
 
 
 @dataclass
 class TableConfig:
-    """Configuration for creating and managing SQLAlchemy tables.
-
-    This class defines the schema for an SQLAlchemy table, including its name,
-    columns, primary key, and strategy for handling existing tables.
-
-    Args:
-        table_name: The name of the table.
-        columns: A list of SQLAlchemy Column objects defining the table schema.
-        primary_key: The name of the primary key column.
-
-    """
 
     table_name: str
     columns: list[sql.Column[Any]]
@@ -105,38 +58,13 @@ class TableConfig:
 
     @property
     def column_names(self) -> list[str]:
-        return [c.name for c in self.columns]
+        pass
 
     def create_table(self, metadata: MetaData, engine: Engine) -> sql.Table:
-        """Create or reflect the table in the database.
-
-        Args:
-            metadata: The SQLAlchemy MetaData object.
-            engine: The SQLAlchemy Engine object.
-
-        Returns:
-            The SQLAlchemy Table object representing the created or reflected table.
-
-        """
-        metadata.reflect(engine)
-        table = sql.Table(
-            self.table_name, metadata, *self.columns, extend_existing=True
-        )
-        metadata.create_all(engine)
-        return table
+        pass
 
 
 class _SQLAlchemyStoreMixin:
-    """Mixin class for common SQLAlchemy store operations.
-
-    This class provides common methods for selecting, inserting, and executing
-    SQL statements in an SQLAlchemy-based key-value store.
-
-    Args:
-        db_config: The SQLAlchemyConfig object for database configuration.
-        table_config: The TableConfig object for table configuration.
-
-    """
 
     def __init__(self, db_config: SQLAlchemyConfig, table_config: TableConfig):
         self._db_config = db_config
@@ -146,19 +74,19 @@ class _SQLAlchemyStoreMixin:
 
     @property
     def column_names(self) -> list[str]:
-        return self._table_config.column_names
+        pass
 
     @property
     def table_name(self) -> str:
-        return self._table_config.table_name
+        pass
 
     @property
     def table(self) -> sql.Table:
-        return self._table
+        pass
 
     @property
     def engine(self) -> Engine:
-        return self._engine
+        pass
 
     def _select_row_by_key(self, key: int) -> list[Any]:
         stmt = self._table.select().where(
@@ -204,18 +132,6 @@ class SQLAlchemySimpleStore(
     NonUpdatableKeyValueStore[InputType, OutputType],
     _SQLAlchemyStoreMixin,
 ):
-    """A simple SQLAlchemy-based key-value store that does not support updates.
-
-    This class provides basic key-value storage functionality using SQLAlchemy,
-    where values are serialized and stored as BLOBs. The store does not support
-    updating existing entries.
-
-    Args:
-            table_name: The name of the table.
-            primary_key: The primary key column name.
-            db_config: The SQLAlchemyConfig object for database configuration.
-
-    """
 
     _value_column: str = "serialized_value"
 
@@ -292,18 +208,6 @@ class SQLAlchemySimpleStore(
 class SQLAlchemyTableStore(
     UpdatableKeyValueStore[InputType, OutputType], _SQLAlchemyStoreMixin
 ):
-    """An SQLAlchemy-based key-value store that supports updates.
-
-    This class provides key-value storage functionality using SQLAlchemy,
-    allowing for insertion, updating, and selection of data.
-
-    Args:
-        table_config: The TableConfig object defining the table schema.
-        db_config: The SQLAlchemyConfig object for database configuration.
-        input_type: The type of input data.
-        output_type: The type of output data.
-
-    """
 
     def __init__(
         self,
@@ -378,12 +282,6 @@ class SQLAlchemyTableStore(
 
 
 class IterationStore(SQLAlchemySimpleStore[IterationState, IterationStateWithId]):
-    """Store for managing iteration data in an SQLite database.
-
-    Args:
-        db_config (SQLiteConfig): The SQLiteConfig object for database configuration.
-
-    """
 
     _TABLE_NAME = "optimization_iterations"
     _PRIMARY_KEY = "rowid"
@@ -402,12 +300,6 @@ class IterationStore(SQLAlchemySimpleStore[IterationState, IterationStateWithId]
 
 
 class StepStore(SQLAlchemyTableStore[StepResult, StepResultWithId]):
-    """Store for managing step data in an SQLite database.
-
-    Args:
-        db_config (SQLiteConfig): The SQLiteConfig object for database configuration.
-
-    """
 
     _TABLE_NAME = "steps"
     _PRIMARY_KEY = "rowid"
@@ -441,14 +333,6 @@ class StepStore(SQLAlchemyTableStore[StepResult, StepResultWithId]):
 class ProblemStore(
     SQLAlchemyTableStore[ProblemInitialization, ProblemInitializationWithId]
 ):
-    """Store for managing optimization problem initialization data in an SQLite
-
-    database.
-
-    Args:
-        db_config (SQLiteConfig): The SQLiteConfig object for database configuration.
-
-    """
 
     _TABLE_NAME = "optimization_problem"
     _PRIMARY_KEY = "rowid"

@@ -1,8 +1,3 @@
-"""Check compatibility of pc with each other and with bounds and fixes.
-
-See the module docstring of process_constraints for naming conventions.
-
-"""
 
 from functools import partial
 
@@ -31,7 +26,6 @@ def check_constraints_are_satisfied(flat_constraints, param_values, param_names)
         ValueError if constraints are not satisfied.
 
     """
-    # skip check if all parameters are NaN
     if not np.isfinite(param_values).any():
         return
 
@@ -98,25 +92,7 @@ def check_constraints_are_satisfied(flat_constraints, param_values, param_names)
 
 
 def _get_message(constraint, param_names, explanation=""):
-    start = (
-        f"A constraint of type '{constraint['type']}' is not fulfilled in params, "
-        "please make sure that it holds for the starting values. The problem arose "
-        "because:"
-    )
-
-    if explanation:
-        explanation = f" {explanation.rstrip('. ')}. "
-
-    names = [param_names[i] for i in constraint["index"]]
-
-    end = (
-        f"The names of the involved parameters are:\n{names}\n"
-        "The relevant constraint is:\n"
-        f"{constraint}."
-    )
-
-    msg = start + explanation + end
-    return msg
+    pass
 
 
 def check_types(constraints):
@@ -193,7 +169,6 @@ def check_fixes_and_bounds(constr_info, transformations, parnames):
 
     """
     constr_info = constr_info.copy()
-    # as an array, boolean indexing with masks like is_fixed_to_value works below
     constr_info["index"] = np.array(parnames)
 
     prob_msg = (

@@ -1,4 +1,3 @@
-"""Auxiliary functions for the quadratic BNTR trust-region subsolver."""
 
 from functools import reduce
 from typing import NamedTuple
@@ -405,7 +404,6 @@ def _compute_conjugate_gradient_step(
     conjugate_gradient_step = np.zeros_like(x_candidate)
 
     if active_bounds_info.inactive.size == 0:
-        # Save some computation and return an adjusted zero step
         step_inactive = _apply_bounds_to_x_candidate(
             x_candidate, lower_bounds, upper_bounds
         )
@@ -453,7 +451,6 @@ def _compute_conjugate_gradient_step(
 
         if trustregion_radius == 0:
             if step_norm > 0:
-                # Accept
                 trustregion_radius = np.clip(
                     step_norm,
                     options_update_radius["min_radius"],
@@ -461,7 +458,6 @@ def _compute_conjugate_gradient_step(
                 )
 
             else:
-                # Re-solve
                 trustregion_radius = np.clip(
                     options_update_radius["default_radius"],
                     options_update_radius["min_radius"],
@@ -522,8 +518,6 @@ def _compute_predicted_reduction_from_conjugate_gradient_step(
 ):
     """Compute predicted reduction induced by the Conjugate Gradient step."""
     if active_bounds_info.active.size > 0:
-        # Projection changed the step, so we have to recompute the step
-        # and the predicted reduction. Leave the rust radius unchanged.
         cg_step_recomp = conjugate_gradient_step[active_bounds_info.inactive]
         gradient_inactive_recomp = gradient_unprojected[active_bounds_info.inactive]
 
@@ -531,8 +525,6 @@ def _compute_predicted_reduction_from_conjugate_gradient_step(
             cg_step_recomp, gradient_inactive_recomp, hessian_inactive
         )
     else:
-        # Step did not change, so we can just recover the
-        # pre-computed prediction
         predicted_reduction = _evaluate_model_criterion(
             conjugate_gradient_step_inactive,
             gradient_inactive,
@@ -622,7 +614,6 @@ def _update_trustregion_radius_conjugate_gradient(
     accept_step = False
 
     if predicted_reduction < 0 or ~np.isfinite(predicted_reduction):
-        # Reject and start over
         trustregion_radius = options["alpha1"] * min(trustregion_radius, x_norm_cg)
 
     else:
@@ -637,26 +628,20 @@ def _update_trustregion_radius_conjugate_gradient(
                 kappa = actual_reduction / predicted_reduction
 
             if kappa < options["eta1"]:
-                # Reject the step
                 trustregion_radius = options["alpha1"] * min(
                     trustregion_radius, x_norm_cg
                 )
             else:
                 accept_step = True
 
-                # Update the trust-region radius only if the computed step is at the
-                # trust-radius boundary
                 if x_norm_cg == trustregion_radius:
                     if kappa < options["eta2"]:
-                        # Marginal bad step
                         trustregion_radius = options["alpha2"] * trustregion_radius
                     elif kappa < options["eta3"]:
-                        # Reasonable step
                         trustregion_radius = options["alpha3"] * trustregion_radius
                     elif kappa < options["eta4"]:
                         trustregion_radius = options["alpha4"] * trustregion_radius
                     else:
-                        # Very good step
                         trustregion_radius = options["alpha5"] * trustregion_radius
 
     trustregion_radius = np.clip(
@@ -841,7 +826,6 @@ def _update_trustregion_radius_and_gradient_descent(
     tau_max = max(tau_1, tau_2)
 
     if abs(kappa - 1) <= options["mu1"]:
-        # Great agreement
         radius_lower_bound = max(radius_lower_bound, trustregion_radius)
 
         if tau_max < 1:
@@ -852,7 +836,6 @@ def _update_trustregion_radius_and_gradient_descent(
             tau = tau_max
 
     elif abs(kappa - 1) <= options["mu2"]:
-        # Good agreement
         radius_lower_bound = max(radius_lower_bound, trustregion_radius)
 
         if tau_max < options["gamma2"]:
@@ -863,7 +846,6 @@ def _update_trustregion_radius_and_gradient_descent(
             tau = tau_max
 
     else:
-        # Not good agreement
         if tau_min > 1:
             tau = options["gamma2"]
         elif tau_max < options["gamma1"]:
@@ -905,25 +887,7 @@ def _get_fischer_burmeister_direction_vector(x, gradient, lower_bounds, upper_bo
 
 
 def _get_fischer_burmeister_scalar(a, b):
-    """Get the value of the Fischer-Burmeister function for two scalar inputs.
-
-    This method was suggested by Bob Vanderbei. Since the Fischer-Burmeister
-    is symmetric, the order of the scalar inputs does not matter.
-
-    Args:
-        a (float): First input.
-        b (float): Second input.
-
-    Returns:
-        float: Value of the Fischer-Burmeister function for inputs a and b.
-
-    """
-    if a + b <= 0:
-        fischer_burmeister = np.sqrt(a**2 + b**2) - (a + b)
-    else:
-        fischer_burmeister = -2 * a * b / (np.sqrt(a**2 + b**2) + (a + b))
-
-    return fischer_burmeister
+    pass
 
 
 def _evaluate_model_criterion(

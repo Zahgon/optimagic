@@ -1,12 +1,3 @@
-"""Implement algorithms by the (Numerical Algorithms Group)[https://www.nag.com/].
-
-The following arguments are not supported as ``algo_options``:
-
-- ``scaling_within_bounds``
-- ``init.run_in_parallel``
-- ``do_logging``, ``print_progress`` and all their advanced options.
-
-"""
 
 import warnings
 from dataclasses import dataclass
@@ -158,10 +149,8 @@ RESET_OPTIONS = {
     "auto_detect_min_correlations": 0.1,
     "points_to_replace_at_soft_reset": 3,
     "max_consecutive_unsuccessful_resets": 10,
-    # just bobyqa
     "max_unsuccessful_resets": None,
     "trust_region_scaling_at_unsuccessful_reset": None,
-    # just dfols
     "max_interpolation_points": None,
     "n_extra_interpolation_points_per_soft_reset": 0,
     "n_extra_interpolation_points_per_hard_reset": 0,
@@ -241,8 +230,6 @@ TRUSTREGION_FAST_START_OPTIONS = {
     "method": "auto",
     "scale_of_trustregion_step_perturbation": None,
     "scale_of_jacobian_components_perturbation": 1e-2,
-    # the following will be growing.full_rank.min_sing_val
-    # but it not supported yet by DF-OLS.
     "floor_of_jacobian_singular_values": 1,
     "jacobian_max_condition_number": 1e8,
     "geometry_improving_steps": False,
@@ -935,7 +922,6 @@ def _create_nag_advanced_options(
         raise ValueError("You cannot specify both multiplicative and additive noise.")
     if trustregion_initial_radius is None:
         trustregion_initial_radius = calculate_trustregion_initial_radius(x)
-    # -np.inf as a default leads to errors when building the documentation with sphinx.
     noise_n_evals_per_point = _change_evals_per_point_interface(noise_n_evals_per_point)
     trustregion_reset_options = _build_options_dict(
         user_input=trustregion_reset_options,
@@ -1024,12 +1010,7 @@ def _change_evals_per_point_interface(func):
     if func is not None:
 
         def adjusted_noise_n_evals_per_point(delta, rho, iter, nrestarts):  # noqa: A002
-            return func(
-                upper_trustregion_radius=delta,
-                lower_trustregion_radius=rho,
-                n_iterations=iter,
-                n_resets=nrestarts,
-            )
+            pass
 
         return adjusted_noise_n_evals_per_point
 

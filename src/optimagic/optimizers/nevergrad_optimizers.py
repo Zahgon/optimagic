@@ -1,4 +1,3 @@
-"""Implement optimizers from the nevergrad package."""
 
 from __future__ import annotations
 
@@ -60,20 +59,6 @@ NEVERGRAD_NOT_INSTALLED_ERROR = (
 )
 @dataclass(frozen=True)
 class NevergradPSO(Algorithm):
-    """Minimize a scalar function using the Particle Swarm Optimization algorithm.
-
-    The Particle Swarm Optimization algorithm was originally proposed by
-    :cite:`Kennedy1995`.The implementation in Nevergrad is based on
-    :cite:`Zambrano2013`.
-
-    PSO solves an optimization problem by evolving a swarm of particles
-    (candidate solutions) across the search space. Each particle adjusts its position
-    based on its own experience (cognitive component) and the experiences
-    of its neighbors or the swarm (social component), using velocity updates. The
-    algorithm iteratively guides the swarm toward promising regions of the search
-    space.
-
-    """
 
     transform: Literal["arctan", "gaussian", "identity"] = "arctan"
     """The transform used to map from PSO optimization space to real space."""
@@ -189,22 +174,6 @@ class NevergradPSO(Algorithm):
 )
 @dataclass(frozen=True)
 class NevergradCMAES(Algorithm):
-    """Minimize a scalar function using the Covariance Matrix Adaptation Evolution
-    Strategy (CMA-ES) algorithm.
-
-    The CMA-ES is a state-of-the-art evolutionary algorithm for difficult non-linear,
-    non-convex, black-box optimization problems in continuous domains. It is typically
-    applied to unconstrained or bounded problems with dimensionality between 3 and 100.
-    CMA-ES adapts a multivariate normal distribution to approximate the objective
-    function's shape by estimating a positive-definite covariance matrix, akin to the
-    inverse Hessian in convex-quadratic problems, but without requiring derivatives.
-
-    This implementation is a python wrapper over the original code.
-
-    Original paper can be accessed at `cma-es
-    <https://cma-es.github.io/>`_.
-
-    """
 
     scale: NonNegativeFloat = 1.0
     """Scale of the search."""
@@ -413,20 +382,6 @@ class NevergradCMAES(Algorithm):
 )
 @dataclass(frozen=True)
 class NevergradOnePlusOne(Algorithm):
-    """Minimize a scalar function using the One-Plus-One Evolutionary algorithm.
-
-    The One-Plus-One evolutionary algorithm iterates to find a set of parameters
-    that minimizes the loss function. It does this by perturbing, or mutating,
-    the parameters from the last iteration (the parent). If the new (child)
-    parameters yield a better result, the child becomes the new parent whose
-    parameters are perturbed, perhaps more aggressively. If the parent yields a
-    better result, it remains the parent and the next perturbation is less
-    aggressive.
-
-    Originally proposed by :cite:`Rechenberg1973`. The implementation in
-    Nevergrad is based on the one-fifth adaptation rule from :cite:`Schumer1968`.
-
-    """
 
     noise_handling: (
         Literal["random", "optimistic"]
@@ -589,14 +544,6 @@ class NevergradOnePlusOne(Algorithm):
 )
 @dataclass(frozen=True)
 class NevergradDifferentialEvolution(Algorithm):
-    """Minimize a scalar function using the Differential Evolution optimizer.
-
-    Differential Evolution is typically used for continuous optimization. It uses
-    differences between points in the population for performing mutations in fruitful
-    directions. It is a kind of covariance adaptation without any explicit covariance,
-    making it very fast in high dimensions.
-
-    """
 
     initialization: Literal["parametrization", "LHS", "QR", "QO", "SO"] = (
         "parametrization"
@@ -711,16 +658,6 @@ class NevergradDifferentialEvolution(Algorithm):
 )
 @dataclass(frozen=True)
 class NevergradBayesOptim(Algorithm):
-    """Minimize a scalar function using the Bayesian Optimization (BO) algorithm.
-
-    This wrapper uses the BO and PCA-BO algorithms from the `bayes_optim` package
-    :cite:`bayesoptimimpl`. PCA-BO (Principal Component Analysis for Bayesian
-    Optimization) is a dimensionality reduction technique for black-box
-    optimization. It applies PCA to the input space before performing Bayesian
-    optimization, improving efficiency in high dimensions by focusing on
-    directions of greatest variance.
-
-    """
 
     init_budget: int | None = None
     """Number of initialization algorithm steps."""
@@ -794,15 +731,6 @@ class NevergradBayesOptim(Algorithm):
 )
 @dataclass(frozen=True)
 class NevergradEMNA(Algorithm):
-    """Minimize a scalar function using the Estimation of Multivariate Normal Algorithm.
-
-    EMNA is a distribution-based evolutionary algorithm that models the search
-    space using a multivariate Gaussian. It learns the full covariance matrix,
-    resulting in a cubic time complexity with respect to each sampling. It is
-    efficient in parallel settings but other methods should be considered first.
-    See :cite:`emnaimpl`.
-
-    """
 
     isotropic: bool = True
     """If True, uses an isotropic (identity covariance) Gaussian.
@@ -888,14 +816,6 @@ class NevergradEMNA(Algorithm):
 )
 @dataclass(frozen=True)
 class NevergradCGA(Algorithm):
-    """Minimize a scalar function using the Compact Genetic Algorithm.
-
-    The Compact Genetic Algorithm (cGA) is a memory-efficient genetic algorithm
-    that represents the population as a probability vector over gene values. It
-    simulates the behavior of a simple GA with uniform crossover by updating
-    probabilities instead of maintaining an explicit population. See :cite:`cgaimpl`.
-
-    """
 
     stopping_maxfun: PositiveInt = STOPPING_MAXFUN_GLOBAL
     """Maximum number of function evaluations before termination."""
@@ -950,15 +870,6 @@ class NevergradCGA(Algorithm):
 )
 @dataclass(frozen=True)
 class NevergradEDA(Algorithm):
-    """Minimize a scalar function using the Estimation of Distribution Algorithm.
-
-    Estimation of Distribution Algorithms (EDAs) optimize by building and sampling
-    a probabilistic model of promising solutions. Instead of using traditional
-    variation operators like crossover or mutation, EDAs update a distribution
-    based on selected individuals and sample new candidates from it.
-    Refer to :cite:`edaimpl`.
-
-    """
 
     stopping_maxfun: PositiveInt = STOPPING_MAXFUN_GLOBAL
     """Maximum number of function evaluations before termination."""
@@ -1013,15 +924,6 @@ class NevergradEDA(Algorithm):
 )
 @dataclass(frozen=True)
 class NevergradTBPSA(Algorithm):
-    r"""Minimize a scalar function using the Test-based Population Size Adaptation
-    algorithm.
-
-    TBPSA adapts population size based on fitness trend detection using linear
-    regression. If no significant improvement is found (via hypothesis testing),
-    the population size is increased to improve robustness, making it effective
-    for noisy optimization problems. For more details, refer to :cite:`tbpsaimpl`.
-
-    """
 
     noise_handling: bool = True
     """If True, returns the best individual.
@@ -1094,12 +996,6 @@ class NevergradTBPSA(Algorithm):
 )
 @dataclass(frozen=True)
 class NevergradRandomSearch(Algorithm):
-    """Minimize a scalar function using the Random Search algorithm.
-
-    This is a one-shot optimization method that provides random suggestions and serves
-    as a simple baseline for other optimizers.
-
-    """
 
     middle_point: bool = False
     """Enforces that the first suggested point is the zero vector."""
@@ -1188,14 +1084,6 @@ class NevergradRandomSearch(Algorithm):
 )
 @dataclass(frozen=True)
 class NevergradSamplingSearch(Algorithm):
-    """Minimize a scalar function using SamplingSearch.
-
-    This is a one-shot optimization method that is better than random search because it
-    uses low-discrepancy sequences to ensure more uniform coverage of the search space.
-    It is recommended to use "Hammersley" as the sampler if the budget is known, and to
-    set `scrambled=True` in high dimensions.
-
-    """
 
     sampler: Literal["Halton", "LHS", "Hammersley"] = "Halton"
     """Choice of the low-discrepancy sampler used for generating points.
@@ -1291,13 +1179,6 @@ class NevergradSamplingSearch(Algorithm):
 )
 @dataclass(frozen=True)
 class NevergradNGOpt(Algorithm):
-    """Minimize a scalar function using a Meta Optimizer from Nevergrad.
-
-    These are meta-optimizers that intelligently combine multiple different
-    optimization algorithms to solve a problem. The specific portfolio of
-    optimizers can be selected via the `optimizer` parameter.
-
-    """
 
     optimizer: Literal[
         "NGOpt",
@@ -1413,13 +1294,6 @@ class NevergradNGOpt(Algorithm):
 )
 @dataclass(frozen=True)
 class NevergradMeta(Algorithm):
-    """Minimize a scalar function using a Meta Optimizer from Nevergrad.
-
-    This algorithm utilizes a combination of local and global optimizers to find
-    the best solution. The specific portfolio of optimizers can be selected via
-    the `optimizer` parameter.
-
-    """
 
     optimizer: Literal[
         "MultiBFGSPlus",
@@ -1541,9 +1415,6 @@ def _nevergrad_internal(
 
     instrum = ng.p.Instrumentation(param)
 
-    # In case bounds are not provided, the initial population is sampled
-    # from a gaussian with mean = 0 and sd = 1,
-    # which can be set through this method.
     param.set_mutation(sigma=sigma)
 
     if seed is not None:
@@ -1553,12 +1424,7 @@ def _nevergrad_internal(
         parametrization=instrum, budget=stopping_maxfun, num_workers=n_cores
     )
 
-    ### Skip handling of non_linear constraints until improve constraint handling.
-    # if nonlinear_constraints:
-    #     constraints = _process_nonlinear_constraints(nonlinear_constraints)
-    ###
 
-    # optimization loop using the ask-and-tell interface
     while optimizer.num_ask < stopping_maxfun:
         x_list = [
             optimizer.ask()
@@ -1571,21 +1437,11 @@ def _nevergrad_internal(
             for x, loss in zip(x_list, losses, strict=True):
                 optimizer.tell(x, loss)
 
-    ### Skip handling of non_linear constraints until improve constraint handling.
-    # else:
-    # constraint_violations = _batch_constraint_evaluations(
-    #     constraints, [x.value[0][0] for x in x_list], n_cores
-    # )
-    # for x, loss, cv in zip(x_list, losses, constraint_violations, strict=True):
-    #     optimizer.tell(x, loss, cv)
-    ###
 
     recommendation = optimizer.provide_recommendation()
     best_x = recommendation.value[0][0]
     loss = recommendation.loss
 
-    # In case of CMA, loss is not provided by the optimizer, in that case,
-    # evaluate it manually using problem.fun
     if loss is None:
         loss = problem.fun(best_x)
 
@@ -1601,43 +1457,11 @@ def _nevergrad_internal(
     return result
 
 
-### Skip handling of non_linear constraints until improve constraint handling.
-
-# def _process_nonlinear_constraints(
-#     constraints: list[dict[str, Any]],
-# ) -> list[dict[str, Any]]:
-#     """Process stacked inequality constraints as single constraints.
-
-#     Returns a list of single constraints.
-
-#     """
-#     processed_constraints = []
-#     for c in constraints:
-#         new = _vector_to_list_of_scalar(c)
-#         processed_constraints.extend(new)
-#     return processed_constraints
 
 
-# def _get_constraint_evaluations(
-#     constraints: list[dict[str, Any]], x: NDArray[np.float64]
-# ) -> list[NDArray[np.float64]]:
-#     """In optimagic, inequality constraints are internally defined as g(x) >= 0.
-#    Nevergrad uses h(x) <= 0 hence a sign flip is required. Passed equality
-#    constraints are treated as inequality constraints with lower bound equal to
-#    value. Return a list of constraint evaluations at x.
-
-#     """
-#     results = [-c["fun"](x) for c in constraints]
-#     results = [np.atleast_1d(i) for i in results]
-#     return results
 
 
-# def _batch_constraint_evaluations(
-#     constraints: list[dict[str, Any]], x_list: list[Any], n_cores: int
-# ) -> list[list[NDArray[np.float64]]]:
-#     """Batch version of _get_constraint_evaluations."""
-#     batch = process_batch_evaluator("joblib")
-#     func = partial(_get_constraint_evaluations, constraints)
-#     results = batch(func=func, arguments=[x for x in x_list], n_cores=n_cores)
-#     return results
-###
+
+
+
+

@@ -79,11 +79,9 @@ def _process_one_result(
     x_precision,
     y_precision,
 ):
-    # input processing
     assert isinstance(x_precision, float)
     assert isinstance(y_precision, float)
 
-    # extract information
     _params_hist = result["params_history"]
     _solution_crit = problem["solution"]["value"]
     _start_crit = problem["start_criterion"]
@@ -93,7 +91,6 @@ def _process_one_result(
     if isinstance(_solution_x, np.ndarray) and not np.isfinite(_solution_x).all():
         _solution_x = None
 
-    # calculate the different transformations of criterion values
     crit_hist = np.array(result["criterion_history"])
     monotone_crit_hist = np.minimum.accumulate(crit_hist)
     normalized_crit_hist = (crit_hist - _solution_crit) / (_start_crit - _solution_crit)
@@ -101,7 +98,6 @@ def _process_one_result(
         _start_crit - _solution_crit
     )
 
-    # calculate the different versions of params distance if we have a solution
     if _solution_x is not None:
         params_dist = np.linalg.norm(np.array(_params_hist - _solution_x), axis=1)
         monotone_params_dist = np.minimum.accumulate(params_dist)
@@ -113,7 +109,6 @@ def _process_one_result(
         params_dist_normalized = np.full(len(_params_hist), np.nan)
         monotone_params_dist_normalized = np.full(len(_params_hist), np.nan)
 
-    # put everything together in a dict
     out_dict = {
         "n_evaluations": np.arange(len(crit_hist)),
         "n_batches": result["batches_history"],
@@ -128,7 +123,6 @@ def _process_one_result(
         "monotone_parameter_distance_normalized": monotone_params_dist_normalized,
     }
 
-    # calculate at which iteration the problem has been solved
     if stopping_criterion is not None:
         is_converged_x, x_idx = _check_convergence(params_dist_normalized, x_precision)
         is_converged_y, y_idx = _check_convergence(normalized_crit_hist, y_precision)
@@ -155,7 +149,6 @@ def _process_one_result(
             if solution_idx is not None:
                 out_dict = {k: v[: solution_idx + 1] for k, v in out_dict.items()}
 
-    # create a DataFrame and add metadata
     out = pd.DataFrame(out_dict)
 
     return out, is_converged
@@ -173,20 +166,8 @@ def _check_convergence(values, threshold):
 
 
 def _aggregate_idxs_with_and(x, y):
-    if x is None or y is None:
-        out = None
-    else:
-        out = max(x, y)
-    return out
+    pass
 
 
 def _aggregate_idxs_with_or(x, y):
-    if x is None and y is None:
-        out = None
-    elif x is None:
-        out = y
-    elif y is None:
-        out = x
-    else:
-        out = min(x, y)
-    return out
+    pass

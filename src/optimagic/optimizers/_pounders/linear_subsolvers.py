@@ -1,4 +1,3 @@
-"""Collection of linear trust-region subsolvers."""
 
 from typing import NamedTuple
 
@@ -146,7 +145,6 @@ def improve_geomtery_trsbox_linear(
     if np.any(x_center - zero_treshold > upper_bounds):
         raise ValueError("x_center violates upper bound.")
 
-    # Minimize and maximize g.T @ (x - x_center), respectively
     linear_model_to_minimize = linear_model
     linear_model_to_maximize = linear_model._replace(
         linear_terms=-linear_model.linear_terms
@@ -257,7 +255,6 @@ def _take_constrained_step_up_to_boundary(
     x_candidate = x_candidate + step_size_constr * direction
     x_candidate[index_bound_active] = active_bound
 
-    # Do not search in this direction anymore
     direction[index_bound_active] = 0
 
     return x_candidate, direction

@@ -1,4 +1,3 @@
-"""Check option dictionaries for minimize, maximize."""
 
 
 def check_optimization_options(options, usage, algorithm_mandatory=True):

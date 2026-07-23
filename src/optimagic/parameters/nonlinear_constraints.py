@@ -67,7 +67,6 @@ def process_nonlinear_constraints(
         list[dict]: List of processed constraints.
 
     """
-    # do checks first to fail fast
     constraint_evals = []
     for _constraint in nonlinear_constraints:
         _eval = _check_validity_and_return_evaluation(_constraint, params, skip_checks)
@@ -94,9 +93,6 @@ def _process_nonlinear_constraint(
     c, constraint_eval, params, bounds, converter, numdiff_options
 ):
     """Process a single nonlinear constraint."""
-    # ==================================================================================
-    # Process selector and evaluate functions if necessary
-    # ==================================================================================
 
     external_selector = _process_selector(c)  # functional selector
 
@@ -107,26 +103,14 @@ def _process_nonlinear_constraint(
         constraint_eval = constraint_func(selected)
 
     if bounds is not None:
-        # TODO: use bounds for numerical derivative; For this to work we need to
-        # extend bounds to the full params pytree before passing them to
-        # process_nonlinear_constraints.
 
-        # constraint_bounds = replace(
-        #     bounds,
-        #     lower=external_selector(bounds.lower),
-        #     upper=external_selector(bounds.upper),
-        # )
         constraint_bounds = None
     else:
         constraint_bounds = None
 
     _n_constr = len(np.atleast_1d(constraint_eval))
 
-    # ==================================================================================
-    # Consolidate and transform jacobian
-    # ==================================================================================
 
-    # process numdiff_options for numerical derivative
 
     if "derivative" in c:
         if not callable(c["derivative"]):
@@ -134,7 +118,6 @@ def _process_nonlinear_constraint(
             raise ValueError(msg)
         jacobian = c["derivative"]
     else:
-        # use finite-differences if no closed-form jacobian is defined
         def jacobian(p):
             return first_derivative(
                 constraint_func,
@@ -144,67 +127,27 @@ def _process_nonlinear_constraint(
                 **asdict(numdiff_options),
             ).derivative
 
-    # To define the internal Jacobian we need to know which parameters enter the
-    # contraint function.
     selection_indices, n_params = _get_selection_indices(params, external_selector)
 
     def _internal_jacobian(x):
-        """Return Jacobian of constraint at internal parameters.
+        pass
 
-        The constraint function is written to be evaluated on a selection of the
-        external parameters. The optimizer, however, only works on internal parameters.
-        These can be significantly different from the external parameters, due to
-        optimagic's reparametrization features. In this function we compute the Jacobian
-        of the constraint at the internal parameters using information on the Jacobian
-        of the constraint at the selected external parameters.
-
-        """
-        params = converter.params_from_internal(x)
-        selected = external_selector(params)
-        jac = jacobian(selected)
-        jac_matrix = block_tree_to_matrix(jac, constraint_eval, selected)
-        jac_extended = _extend_jacobian(jac_matrix, selection_indices, n_params)
-        jac_internal = converter.derivative_to_internal(
-            jac_extended, x, jac_is_flat=True
-        )
-        return np.atleast_2d(jac_internal)
-
-    # ==================================================================================
-    # Transform constraint function and derive bounds
-    # ==================================================================================
     _type = "eq" if "value" in c else "ineq"
 
     if _type == "eq":
-        # ==============================================================================
-        # Equality constraints
-        #
-        # We define the internal constraint function to be satisfied if it is equal
-        # to zero, by subtracting the fixed value.
 
         _value = np.atleast_1d(np.array(c["value"], dtype=float))
 
         def internal_constraint_func(x):
-            params = converter.params_from_internal(x)
-            select = external_selector(params)
-            out = np.atleast_1d(constraint_func(select)) - _value
-            return out
+            pass
 
         jacobian_from_internal = _internal_jacobian
         n_constr = _n_constr
 
     else:
-        # ==============================================================================
-        # Inequality constraints
-        #
-        # We define the internal constraint function to be satisfied if it is
-        # greater than or equal to zero (positivity constraint). If the bounds already
-        # satify this condition we do not change anything, otherwise we need to perform
-        # a transformation.
 
         def _internal_constraint_func(x):
-            params = converter.params_from_internal(x)
-            select = external_selector(params)
-            return np.atleast_1d(constraint_func(select))
+            pass
 
         lower_bounds = c.get("lower_bounds", 0)
         upper_bounds = c.get("upper_bounds", np.inf)
@@ -249,8 +192,7 @@ def _equality_to_inequality(c):
     if c["type"] == "eq":
 
         def transform(x, func):
-            value = func(x)
-            return np.concatenate((value, -value), axis=0)
+            pass
 
         out = {
             "fun": partial(transform, func=c["fun"]),
@@ -310,9 +252,6 @@ def _get_components(fun, jac, idx):
     return fun_component, jac_component
 
 
-# ======================================================================================
-# Helper Functions
-# ======================================================================================
 
 
 def _process_selector(c):
@@ -338,12 +277,9 @@ def _compose_funcs(f, g):
 
 
 def _identity(x):
-    return x
+    pass
 
 
-# ======================================================================================
-# Jacobian helper functions
-# ======================================================================================
 
 
 def _extend_jacobian(jac_mat, selection_indices, n_params):
@@ -373,9 +309,6 @@ def _get_selection_indices(params, selector):
     return selection_indices, n_params
 
 
-# ======================================================================================
-# Transformation helper functions
-# ======================================================================================
 
 
 def _get_transformation(lower_bounds, upper_bounds):
@@ -411,20 +344,14 @@ def _get_transformation_type(lower_bounds, upper_bounds):
     ub_is_inf = np.all(np.isposinf(upper_bounds))
 
     if lb_is_zero and ub_is_inf:
-        # the external constraint is already in the correct format
         _transformation_type = "identity"
     elif ub_is_inf:
-        # the external constraint can be transformed by subtraction
         _transformation_type = "subtract_lb"
     else:
-        # the external constraint can only be transformed by duplication (stacking)
         _transformation_type = "stack"
     return _transformation_type
 
 
-# ======================================================================================
-# Checks
-# ======================================================================================
 
 
 def _check_validity_and_return_evaluation(c, params, skip_checks):
@@ -435,9 +362,6 @@ def _check_validity_and_return_evaluation(c, params, skip_checks):
             else None.
 
     """
-    # ==================================================================================
-    # check functions
-    # ==================================================================================
 
     if "func" not in c:
         raise InvalidConstraintError(
@@ -454,9 +378,6 @@ def _check_validity_and_return_evaluation(c, params, skip_checks):
             "Entry 'jac' in nonlinear constraints has be callable."
         )
 
-    # ==================================================================================
-    # check bounds
-    # ==================================================================================
 
     is_equality_constraint = "value" in c
 
@@ -480,9 +401,6 @@ def _check_validity_and_return_evaluation(c, params, skip_checks):
                 "If lower bounds need to less than or equal to upper bounds."
             )
 
-    # ==================================================================================
-    # check selector
-    # ==================================================================================
 
     if "selector" in c:
         if not callable(c["selector"]):
@@ -522,9 +440,6 @@ def _check_validity_and_return_evaluation(c, params, skip_checks):
                 f"'query' string is invalid in constraint {c}."
             ) from e
 
-    # ==================================================================================
-    # check that constraints can be evaluated
-    # ==================================================================================
 
     constraint_eval = None
 

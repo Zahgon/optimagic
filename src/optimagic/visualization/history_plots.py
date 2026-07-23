@@ -73,15 +73,11 @@ def criterion_plot(
         The figure object containing the criterion plot.
 
     """
-    # ==================================================================================
-    # Process inputs
 
     palette_cycle = get_palette_cycle(palette)
 
     dict_of_optimize_results_or_paths = _harmonize_inputs_to_dict(results, names)
 
-    # ==================================================================================
-    # Extract backend-agnostic plotting data from results
 
     list_of_optimize_data = _retrieve_optimization_data_from_results(
         results=dict_of_optimize_results_or_paths,
@@ -98,8 +94,6 @@ def criterion_plot(
         monotone=monotone,
     )
 
-    # ==================================================================================
-    # Generate the figure
 
     fig = line_plot(
         lines=multistart_lines + lines,
@@ -118,7 +112,6 @@ def _harmonize_inputs_to_dict(
     names: list[str] | str | None,
 ) -> dict[str, ResultOrPath]:
     """Convert all valid inputs for results and names to dict[str, OptimizeResult]."""
-    # convert scalar case to list case
     if not isinstance(names, list) and names is not None:
         names = [names]
 
@@ -128,20 +121,17 @@ def _harmonize_inputs_to_dict(
     if names is not None and len(names) != len(results):
         raise ValueError("len(results) needs to be equal to len(names).")
 
-    # handle dict case
     if isinstance(results, dict):
         if names is not None:
             results_dict = dict(zip(names, list(results.values()), strict=False))
         else:
             results_dict = results
 
-    # unlabeled iterable of results
     else:
         if names is None:
             names = [str(i) for i in range(len(results))]
         results_dict = dict(zip(names, results, strict=False))
 
-    # convert keys to strings
     results_dict = {_convert_key_to_str(k): v for k, v in results_dict.items()}
 
     return results_dict
@@ -186,13 +176,9 @@ def params_plot(
         The figure object containing the params plot.
 
     """
-    # ==================================================================================
-    # Process inputs
 
     palette_cycle = get_palette_cycle(palette)
 
-    # ==================================================================================
-    # Extract backend-agnostic plotting data from results
 
     optimize_data = _retrieve_optimization_data_from_single_result(
         result=result,
@@ -208,8 +194,6 @@ def params_plot(
         palette_cycle=palette_cycle,
     )
 
-    # ==================================================================================
-    # Generate the figure
 
     fig = line_plot(
         lines=lines,
@@ -225,12 +209,6 @@ def params_plot(
 
 @dataclass(frozen=True)
 class _PlottingMultistartHistory:
-    """Data container for an optimization history and metadata. Contains local histories
-    in case of multistart optimization.
-
-    This dataclass is only used internally.
-
-    """
 
     history: History
     name: str | None
@@ -246,8 +224,6 @@ def _retrieve_optimization_data_from_results(
     show_exploration: bool,
     plot_name: str,
 ) -> list[_PlottingMultistartHistory]:
-    # Retrieves data from multiple results by iterating over the results dictionary
-    # and calling the single result retrieval function.
 
     data = []
     for name, res in results.items():
@@ -359,7 +335,6 @@ def _retrieve_optimization_data_from_result_object(
                     direction=stacked.direction,
                     fun=fun,
                     params=params,
-                    # TODO: This needs to be fixed
                     start_time=len(fun) * [None],  # type: ignore
                     stop_time=len(fun) * [None],  # type: ignore
                     batches=len(fun) * [None],  # type: ignore
@@ -426,8 +401,6 @@ def _retrieve_optimization_data_from_database(
         fun=_history["fun"],
         params=_history["params"],
         start_time=_history["time"],
-        # TODO (@janosg): Retrieve `stop_time` from `hist` once it is available.
-        # https://github.com/optimagic-dev/optimagic/pull/553
         stop_time=len(_history["fun"]) * [None],  # type: ignore
         task=len(_history["fun"]) * [None],  # type: ignore
         batches=list(range(len(_history["fun"]))),
@@ -462,7 +435,6 @@ def _get_stacked_local_histories(
         stacked["params"].extend(hist.params)
         stacked["runtime"].extend(hist.time)
 
-    # append additional history is necessary
     if history is not None:
         stacked["criterion"].extend(history.fun)
         stacked["params"].extend(history.params)
@@ -473,9 +445,6 @@ def _get_stacked_local_histories(
         fun=stacked["criterion"],
         params=stacked["params"],
         start_time=stacked["runtime"],
-        # TODO (@janosg): Retrieve `stop_time` from `hist` once it is available for the
-        # IterationHistory.
-        # https://github.com/optimagic-dev/optimagic/pull/553
         stop_time=len(stacked["criterion"]) * [None],  # type: ignore
         task=len(stacked["criterion"]) * [None],  # type: ignore
         batches=list(range(len(stacked["criterion"]))),
@@ -508,7 +477,6 @@ def _extract_criterion_plot_lines(
     """
     fun_or_monotone_fun = "monotone_fun" if monotone else "fun"
 
-    # Collect multistart optimization paths
     multistart_lines: list[LineData] = []
 
     plot_multistart = len(data) == 1 and data[0].is_multistart and not stack_multistart
@@ -529,7 +497,6 @@ def _extract_criterion_plot_lines(
             )
             multistart_lines.append(line_data)
 
-    # Collect main optimization paths
     lines: list[LineData] = []
 
     for _data in data:

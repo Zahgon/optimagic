@@ -1,21 +1,3 @@
-"""Implement pygmo optimizers.
-
-Notes for converting to the new algorithm interface:
-
-- `create_algo_options` is not needed anymore because the only thing it did was mixing
-  options that are supported by all optimizers (e.g. population_size, seed) with
-  specific options. Then later they had to be taken appart again. Instead you need
-  to pass  a few more arguments directly to `_minimize_pygmo`.
-- Calling `_check_that_every_param_is_bounded` is not needed anymore. I do that check
-  once in `_minimize_pygmo`.
-- The documentation often just says float where I suspect PositiveFloats; Leave it at
-  float for now and add todos where needed. Don't spend a lot of time on it.
-- There are some specific type checks and type conversions that should not be needed
-  anymore after switching to the new interface.
-- Whenever we had batch_evaluator as `algo_option` we don't need it anymore but we
-  should have `n_cores` in those algorithms.
-
-"""
 
 from __future__ import annotations
 
@@ -188,9 +170,7 @@ class PygmoDe(Algorithm):
     seed: int | None = None
     discard_start_params: bool = False
     stopping_maxiter: PositiveInt = STOPPING_MAX_ITERATIONS_GENETIC
-    # TODO: Refine type to fix range [0,2]
     weight_coefficient: NonNegativeFloat = 0.8
-    # TODO: Probably refine type to fix range [0,1]
     crossover_probability: NonNegativeFloat = 0.9
     mutation_variant: Literal[
         "best/1/exp",
@@ -213,7 +193,6 @@ class PygmoDe(Algorithm):
         population_size = get_population_size(
             population_size=self.population_size, x=x0, lower_bound=10
         )
-        # support both integer and string specification of the mutation variant
         mutation_variant_str_to_int = {
             "best/1/exp": 1,
             "rand/1/exp": 2,
@@ -321,7 +300,6 @@ class PygmoSga(Algorithm):
     seed: int | None = None
     discard_start_params: bool = False
     stopping_maxiter: PositiveInt = STOPPING_MAX_ITERATIONS_GENETIC
-    # TODO: Refine type to fix range [0,1]
     crossover_probability: NonNegativeFloat = 0.9
     crossover_strategy: Literal[
         "exponential",
@@ -329,19 +307,13 @@ class PygmoSga(Algorithm):
         "single",
         "binomial",
     ] = "exponential"
-    # TODO: Refine type to fix range [1,100]
     eta_c: PositiveFloat | None = None
-    # TODO: Refine type to fix range [0,1]
     mutation_probability: NonNegativeFloat = 0.02
     mutation_strategy: Literal["uniform", "polynomial"] = "polynomial"
-    # TODO: Refine type to fix range [0,1]
     mutation_polynomial_distribution_index: NonNegativeFloat | None = None
-    # TODO: Refine type to fix range [0,1]
     mutation_gaussian_width: NonNegativeFloat | None = None
     selection_strategy: Literal["tournament", "truncated"] = "tournament"
-    # TODO: Check if should be NonNegativeInt
     selection_truncated_n_best: int | None = None
-    # TODO Check if should be NonNegativeInt
     selection_tournament_size: int | None = None
 
     def _solve_internal_problem(
@@ -565,15 +537,10 @@ class PygmoCmaes(Algorithm):
     seed: int | None = None
     discard_start_params: bool = False
     stopping_maxiter: PositiveInt = STOPPING_MAX_ITERATIONS_GENETIC
-    # TODO: Refine type to fix range [0,1]
     backward_horizon: NonNegativeFloat | None = None
-    # TODO: Refine type to fix range [0,1]
     variance_loss_compensation: NonNegativeFloat | None = None
-    # TODO: Refine type to fix range [0,1]
     learning_rate_rank_one_update: NonNegativeFloat | None = None
-    # TODO: Refine type to fix range [0,1]
     learning_rate_rank_mu_update: NonNegativeFloat | None = None
-    # TODO: Check if should be NonNegativeFloat
     initial_step_size: float = 0.5
     ftol: NonNegativeFloat = 1e-6
     xtol: NonNegativeFloat = 1e-6
@@ -639,15 +606,10 @@ class PygmoSimulatedAnnealing(Algorithm):
     seed: int | None = None
     discard_start_params: bool = False
     start_temperature: PositiveFloat = 10.0
-    # TODO: Check if type should be same as start_temperature
     end_temperature: float = 0.01
-    # TODO: Check if type should be NonNegativeInt
     n_temp_adjustments: int = 10
-    # TODO: Check if type should be NonNegativeInt
     n_range_adjustments: int = 10
-    # TODO: Check if type should be NonNegativeInt
     bin_size: int = 10
-    # TODO: Refine type to fix range [0,1]
     start_range: NonNegativeFloat = 1.0
 
     def _solve_internal_problem(
@@ -700,13 +662,9 @@ class PygmoPso(Algorithm):
     seed: int | None = None
     discard_start_params: bool = False
     stopping_maxiter: PositiveInt = STOPPING_MAX_ITERATIONS_GENETIC
-    # TODO: Refine type to fix range [0,1]
     omega: NonNegativeFloat = 0.7298
-    # TODO: Refine type to fix range [0,4]
     force_of_previous_best: NonNegativeFloat = 2.05
-    # TODO: Refine type to fix range [0,4]
     force_of_best_in_neighborhood: NonNegativeFloat = 2.05
-    # TODO: Refine type to fix range [0,1]
     max_velocity: NonNegativeFloat = 0.5
     algo_variant: Literal[
         "canonical_inertia",
@@ -808,13 +766,9 @@ class PygmoPsoGen(Algorithm):
     seed: int | None = None
     discard_start_params: bool = False
     stopping_maxiter: PositiveInt = STOPPING_MAX_ITERATIONS_GENETIC
-    # TODO: Refine type to fix range [0,1]
     omega: NonNegativeFloat = 0.7298
-    # TODO: Refine type to fix range [0,4]
     force_of_previous_best: NonNegativeFloat = 2.05
-    # TODO: Refine type to fix range [0,4]
     force_of_best_in_neighborhood: NonNegativeFloat = 2.05
-    # TODO: Refine type to fix range [0,1]
     max_velocity: NonNegativeFloat = 0.5
     algo_variant: Literal[
         "canonical_inertia",
@@ -914,15 +868,12 @@ class PygmoMbh(Algorithm):
     seed: int | None = None
     discard_start_params: bool = False
     inner_algorithm: pg.algorithm | None = None
-    # this is 30 instead of 5 in pygmo for our sum of squares test to pass
     stopping_max_inner_runs_without_improvement: PositiveInt = 30
     perturbation: float = 0.01
 
     def _solve_internal_problem(
         self, problem: InternalOptimizationProblem, x0: NDArray[np.float64]
     ) -> InternalOptimizeResult:
-        # the min default population size is this large to pass our sum of
-        # squares tests.
         population_size = get_population_size(
             population_size=self.population_size, x=x0, lower_bound=250
         )
@@ -967,13 +918,9 @@ class PygmoXnes(Algorithm):
     seed: int | None = None
     discard_start_params: bool = False
     stopping_maxiter: PositiveInt = STOPPING_MAX_ITERATIONS_GENETIC
-    # TODO: Refine type to fix range [0,1]
     learning_rate_mean_update: NonNegativeFloat | None = 1.0
-    # TODO: Refine type to fix range [0,1]
     learning_rate_step_size_update: NonNegativeFloat | None = None
-    # TODO: Refine type to fix range [0,1]
     learning_rate_cov_matrix_update: NonNegativeFloat | None = None
-    # TODO: Refine type to fix range [0,1]
     initial_search_share: NonNegativeFloat | None = 1.0
     ftol: NonNegativeFloat = 1e-6
     xtol: NonNegativeFloat = 1e-6
@@ -1090,11 +1037,8 @@ class PygmoCompassSearch(Algorithm):
     seed: int | None = None
     discard_start_params: bool = False
     stopping_maxfun: PositiveInt = STOPPING_MAXFUN_GLOBAL
-    # TODO: Refine type to fix range (0,1]
     start_range: PositiveFloat = 0.1
-    # TODO?: mus be in (0,start_range]
     stop_range: PositiveFloat = 0.01
-    # TODO: Refine type to fix range (0,1)
     reduction_coeff: PositiveFloat = 0.5
 
     def _solve_internal_problem(
@@ -1107,8 +1051,6 @@ class PygmoCompassSearch(Algorithm):
             )
             population_size = self.population_size
         else:
-            # if discard_start_params is False population_size - 1
-            # must still be positive
             population_size = 100
 
         algo_specific_options = {
@@ -1152,11 +1094,8 @@ class PygmoIhs(Algorithm):
     seed: int | None = None
     discard_start_params: bool = False
     stopping_maxiter: PositiveInt = STOPPING_MAX_ITERATIONS_GENETIC
-    # TODO: Probably refine type to fix range [0,1]
     choose_from_memory_probability: NonNegativeFloat = 0.85
-    # TODO: Refine type to fix range [0,1]
     min_pitch_adjustment_rate: NonNegativeFloat = 0.35
-    # TODO: Refine type to fix range [0,1]
     max_pitch_adjustment_rate: NonNegativeFloat = 0.99
     min_distance_bandwidth: PositiveFloat = 1e-5
     max_distance_bandwidth: PositiveFloat = 1.0
@@ -1276,7 +1215,6 @@ class PygmoDe1220(Algorithm):
         return res
 
 
-# ====================================================================================
 
 
 def _minimize_pygmo(
@@ -1324,19 +1262,16 @@ def _create_pygmo_problem(
 
     class Problem:
         def fitness(self, x):
-            return [problem.fun(x)]
+            pass
 
         def get_bounds(self):
-            return (problem.bounds.lower, problem.bounds.upper)
+            pass
 
         def gradient(self, dv):  # noqa: ARG002
             raise ValueError("No pygmo optimizer should use a gradient.")
 
         def batch_fitness(self, dvs):
-            x_list = list(dvs.reshape(-1, dim))
-            eval_list = problem.batch_fun(x_list, n_cores=n_cores)
-            evals = np.array(eval_list)
-            return evals
+            pass
 
     pygmo_problem = pg.problem(Problem())
     return pygmo_problem

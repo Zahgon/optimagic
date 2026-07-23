@@ -1,4 +1,3 @@
-"""Wrapper around pybaum get_registry to tailor it to optimagic."""
 
 from functools import partial
 from itertools import product
@@ -45,46 +44,16 @@ def get_registry(extended=False, data_col="value"):
 
 
 def _flatten_df(df, data_col):
-    is_value_df = "value" in df
-    if is_value_df:
-        flat = df.get(data_col, default=np.full(len(df), np.nan)).tolist()
-    else:
-        flat = df.to_numpy().flatten().tolist()
-
-    aux_data = {
-        "is_value_df": is_value_df,
-        "df": df,
-    }
-    return flat, aux_data
+    pass
 
 
 def _unflatten_df(aux_data, leaves, data_col):
-    if aux_data["is_value_df"]:
-        out = aux_data["df"].assign(**{data_col: leaves})
-    else:
-        out = pd.DataFrame(
-            data=np.array(leaves).reshape(aux_data["df"].shape),
-            columns=aux_data["df"].columns,
-            index=aux_data["df"].index,
-        )
-    return out
+    pass
 
 
 def _get_df_names(df):
-    index_strings = list(df.index.map(_index_element_to_string))
-    if "value" in df:
-        out = index_strings
-    else:
-        out = ["_".join([loc, col]) for loc, col in product(index_strings, df.columns)]
-
-    return out
+    pass
 
 
 def _index_element_to_string(element):
-    if isinstance(element, (tuple, list)):
-        as_strings = [str(entry) for entry in element]
-        res_string = "_".join(as_strings)
-    else:
-        res_string = str(element)
-
-    return res_string
+    pass

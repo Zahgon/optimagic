@@ -1,9 +1,3 @@
-"""Import common objective functions in several optimagic compatible versions.
-
-All implemented functions accept arbitrary pytrees as parameters. If possible they are
-implemented as scalar and least-squares versions.
-
-"""
 
 from __future__ import annotations
 

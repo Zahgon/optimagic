@@ -74,26 +74,6 @@ class AlgoInfo:
 
 @dataclass(frozen=True)
 class InternalOptimizeResult:
-    """Internal representation of the result of an optimization problem.
-
-    Args:
-        x: The optimal parameters.
-        fun: The function value at the optimal parameters.
-        success: Whether the optimization was successful.
-        message: A message from the optimizer.
-        status: The status of the optimization.
-        n_fun_evals: The number of function evaluations.
-        n_jac_evals: The number of gradient or jacobian evaluations.
-        n_hess_evals: The number of Hessian evaluations.
-        n_iterations: The number of iterations.
-        jac: The Jacobian of the objective function at the optimal parameters.
-        hess: The Hessian of the objective function at the optimal parameters.
-        hess_inv: The inverse of the Hessian of the objective function at the optimal
-            parameters.
-        max_constraint_violation: The maximum constraint violation.
-        info: Additional information from the optimizer.
-
-    """
 
     x: NDArray[np.float64]
     fun: float | NDArray[np.float64]
@@ -172,7 +152,6 @@ class InternalOptimizeResult:
 
 
 class AlgorithmMeta(ABCMeta):
-    """Metaclass to get repr, algo_info and name for classes, not just instances."""
 
     def __repr__(self) -> str:
         if hasattr(self, "__algo_info__") and self.__algo_info__ is not None:
@@ -183,32 +162,15 @@ class AlgorithmMeta(ABCMeta):
 
     @property
     def name(self) -> str:
-        if hasattr(self, "__algo_info__") and self.__algo_info__ is not None:
-            out = self.__algo_info__.name
-        else:
-            out = self.__class__.__name__
-        return out
+        pass
 
     @property
     def algo_info(self) -> AlgoInfo:
-        if not hasattr(self, "__algo_info__") or self.__algo_info__ is None:
-            msg = (
-                f"The algorithm {self.name} does not have have the __algo_info__ "
-                "attribute. Use the `mark.minimizer` decorator to add this attribute."
-            )
-            raise AttributeError(msg)
-
-        return self.__algo_info__
+        pass
 
 
 @dataclass(frozen=True)
 class Algorithm(ABC, metaclass=AlgorithmMeta):
-    """Base class for all optimization algorithms in optimagic.
-
-    To add an optimizer to optimagic you need to subclass Algorithm and overide the
-    ``_solve_internal_problem`` method.
-
-    """
 
     @abstractmethod
     def _solve_internal_problem(
@@ -246,26 +208,10 @@ class Algorithm(ABC, metaclass=AlgorithmMeta):
         return replace(self, **kwargs)
 
     def with_stopping(self, **kwargs: Any) -> Self:
-        """Create a modified copy with the given stopping options."""
-        options = {}
-        for k, v in kwargs.items():
-            if k.startswith("stopping_"):
-                options[k] = v
-            else:
-                options[f"stopping_{k}"] = v
-
-        return self.with_option(**options)
+        pass
 
     def with_convergence(self, **kwargs: Any) -> Self:
-        """Create a modified copy with the given convergence options."""
-        options = {}
-        for k, v in kwargs.items():
-            if k.startswith("convergence_"):
-                options[k] = v
-            else:
-                options[f"convergence_{k}"] = v
-
-        return self.with_option(**options)
+        pass
 
     def solve_internal_problem(
         self,
@@ -314,20 +260,8 @@ class Algorithm(ABC, metaclass=AlgorithmMeta):
 
     @property
     def name(self) -> str:
-        """The name of the algorithm."""
-        # cannot call algo_info here because it would be an infinite recursion
-        if hasattr(self, "__algo_info__") and self.__algo_info__ is not None:
-            return self.__algo_info__.name
-        return self.__class__.__name__
+        pass
 
     @property
     def algo_info(self) -> AlgoInfo:
-        """Information about the algorithm."""
-        if not hasattr(self, "__algo_info__") or self.__algo_info__ is None:
-            msg = (
-                f"The algorithm {self.name} does not have have the __algo_info__ "
-                "attribute. Use the `mark.minimizer` decorator to add this attribute."
-            )
-            raise AttributeError(msg)
-
-        return self.__algo_info__
+        pass

@@ -1,4 +1,3 @@
-"""Implementation of the Steihaug-Toint Conjugate Gradient algorithm."""
 
 import numpy as np
 
@@ -162,7 +161,6 @@ def _update_candidate_vector_and_iteration_number(
     radius_sq = radius**2
 
     if radius != 0 and norm_p > 0:
-        # Take step to boundary
         step = np.sqrt(radius_sq / norm_p)
         x_candidate = x_candidate + step * p
 

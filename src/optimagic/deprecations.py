@@ -162,19 +162,11 @@ def throw_derivatives_return_func_value_future_warning():
 
 
 def throw_numdiff_result_func_evals_future_warning():
-    msg = (
-        "The `func_evals` attribute is deprecated and will be removed in optimagic "
-        "version 0.6.0."
-    )
-    warnings.warn(msg, FutureWarning)
+    pass
 
 
 def throw_numdiff_result_derivative_candidates_future_warning():
-    msg = (
-        "The `derivative_candidates` attribute is deprecated and will be removed in "
-        "optimagic version 0.6.0."
-    )
-    warnings.warn(msg, FutureWarning)
+    pass
 
 
 def throw_numdiff_options_deprecated_in_estimate_ml_future_warning():
@@ -197,12 +189,7 @@ def throw_numdiff_options_deprecated_in_estimate_msm_future_warning():
 
 
 def throw_dict_access_future_warning(attribute, obj_name):
-    msg = (
-        f"The dictionary access for '{attribute}' is deprecated and will be removed "
-        "in optimagic version 0.6.0. Please use the new attribute access instead: "
-        f"`{obj_name}.{attribute}`."
-    )
-    warnings.warn(msg, FutureWarning)
+    pass
 
 
 def throw_none_valued_batch_evaluator_warning():
@@ -360,14 +347,7 @@ def replace_dict_output(func: Callable[P, Any]) -> Callable[P, Any]:
 
     @wraps(func)
     def wrapper(*args: P.args, **kwargs: P.kwargs) -> Any:
-        raw = func(*args, **kwargs)
-        # fun and jac case
-        if isinstance(raw, tuple):
-            out = (convert_dict_to_function_value(raw[0]), raw[1])
-        # fun case
-        else:
-            out = convert_dict_to_function_value(raw)
-        return out
+        pass
 
     return wrapper
 
@@ -624,14 +604,6 @@ def pre_process_constraints(
 
 @dataclass(frozen=True)
 class FixedValueConstraint(FixedConstraint):
-    """Fix parameters at an explicit value instead of their start value.
-
-    This exists only to support the deprecated dictionary constraint
-    ``{"type": "fixed", "value": ...}`` and is removed together with dictionary
-    constraints. The value must coincide with the start value of the selected
-    parameters, which is checked during constraints processing.
-
-    """
 
     value: Any = None
 
@@ -710,8 +682,6 @@ def _constraint_from_dict(constr: dict[str, Any]) -> Constraint:
             selector=selector,
             func=constr.get("func", None),
             derivative=constr.get("derivative", None),
-            # in the dict representation the bounds were called lower_bounds and
-            # upper_bounds
             lower_bound=constr.get("lower_bounds", None),
             upper_bound=constr.get("upper_bounds", None),
             value=constr.get("value", None),
@@ -733,7 +703,6 @@ def _get_selector_from_dict(constr: dict[str, Any]) -> Callable[[Any], Any]:
     present = [field for field in ("selector", "loc", "query") if field in constr]
 
     if not present:
-        # nonlinear constraints have always defaulted to selecting all parameters
         if constr.get("type") == "nonlinear":
             return identity_selector
         msg = (

@@ -1,4 +1,3 @@
-"""This module implements the POUNDERs algorithm."""
 
 import functools
 from dataclasses import dataclass
@@ -40,7 +39,6 @@ from optimagic.utilities import calculate_trustregion_initial_radius
 )
 @dataclass(frozen=True)
 class TAOPounders(Algorithm):
-    """Implement the POUNDERs algorithm."""
 
     convergence_gtol_abs: NonNegativeFloat = CONVERGENCE_GTOL_ABS
     convergence_gtol_rel: NonNegativeFloat = CONVERGENCE_GTOL_REL
@@ -113,33 +111,17 @@ def tao_pounders(
     first_eval = criterion(x)
     n_errors = len(first_eval)
     _x = _initialise_petsc_array(x)
-    # We need to know the number of contributions of the criterion value to allocate the
-    # array.
     residuals_out = _initialise_petsc_array(n_errors)
 
-    # Create the solver object.
     tao = PETSc.TAO().create(PETSc.COMM_WORLD)
 
-    # Set the solver type.
     tao.setType("pounders")
 
     tao.setFromOptions()
 
     def func_tao(tao, x, resid_out):  # noqa: ARG001
-        """Evaluate objective and attach result to an petsc object f.
+        pass
 
-        This is required to use the pounders solver from tao.
-
-        Args:
-             tao: The tao object we created for the optimization task.
-             x (PETSc.array): Current parameter values.
-             f: Petsc object in which we save the current function value.
-
-        """
-        resid_out.array = criterion(x.array)
-
-    # Set the procedure for calculating the objective. This part has to be changed if we
-    # want more than pounders.
     tao.setResidual(func_tao, residuals_out)
 
     if trustregion_initial_radius is None:
@@ -148,7 +130,6 @@ def tao_pounders(
         raise ValueError("The initial trust region radius must be > 0.")
     tao.setInitialTrustRegionRadius(trustregion_initial_radius)
 
-    # Add bounds if provided.
     if lower_bounds is not None or upper_bounds is not None:
         if lower_bounds is None:
             lower_bounds = np.full(len(x), -np.inf)
@@ -158,25 +139,17 @@ def tao_pounders(
         upper_bounds = _initialise_petsc_array(upper_bounds)
         tao.setVariableBounds(lower_bounds, upper_bounds)
 
-    # Put the starting values into the container and pass them to the optimizer.
     tao.setInitial(_x)
 
-    # Obtain tolerances for the convergence criteria. Since we can not create
-    # scaled_gradient_tolerance manually we manually set absolute_gradient_tolerance and
-    # or relative_gradient_tolerance to zero once a subset of these two is turned off
-    # and scaled_gradient_tolerance is still turned on.
     default_gatol = convergence_gtol_abs if convergence_gtol_abs else -1
     default_gttol = convergence_gtol_scaled if convergence_gtol_scaled else -1
     default_grtol = convergence_gtol_rel if convergence_gtol_rel else -1
-    # Set tolerances for default convergence tests.
     tao.setTolerances(
         gatol=default_gatol,
         grtol=default_grtol,
         gttol=default_gttol,
     )
 
-    # Set user defined convergence tests. Beware that specifying multiple tests could
-    # overwrite others or lead to unclear behavior.
     if stopping_maxiter is not None:
         tao.setConvergenceTest(functools.partial(_max_iters, stopping_maxiter))
     elif convergence_gtol_scaled is False and convergence_gtol_abs is False:
@@ -192,12 +165,10 @@ def tao_pounders(
             )
         )
 
-    # Run the problem.
     tao.solve()
 
     results = _process_pounders_results(residuals_out, tao)
 
-    # Destroy petsc objects for memory reasons.
     petsc_bounds = [b for b in (lower_bounds, upper_bounds) if b is not None]
     for obj in [tao, _x, residuals_out, *petsc_bounds]:
         obj.destroy()
@@ -229,46 +200,19 @@ def _initialise_petsc_array(len_or_array):
 
 
 def _max_iters(max_iterations, tao):
-    if tao.getSolutionStatus()[0] < max_iterations:
-        return 0
-    elif tao.getSolutionStatus()[0] >= max_iterations:
-        tao.setConvergedReason(8)
+    pass
 
 
 def _gatol_conv(absolute_gradient_tolerance, tao):
-    if tao.getSolutionStatus()[2] >= absolute_gradient_tolerance:
-        return 0
-    elif tao.getSolutionStatus()[2] < absolute_gradient_tolerance:
-        tao.setConvergedReason(3)
+    pass
 
 
 def _grtol_conv(relative_gradient_tolerance, tao):
-    if (
-        tao.getSolutionStatus()[2] / tao.getSolutionStatus()[1]
-        >= relative_gradient_tolerance
-    ):
-        return 0
-    elif (
-        tao.getSolutionStatus()[2] / tao.getSolutionStatus()[1]
-        < relative_gradient_tolerance
-    ):
-        tao.setConvergedReason(4)
+    pass
 
 
 def _grtol_gatol_conv(relative_gradient_tolerance, absolute_gradient_tolerance, tao):
-    if (
-        tao.getSolutionStatus()[2] / tao.getSolutionStatus()[1]
-        >= relative_gradient_tolerance
-    ):
-        return 0
-    elif (
-        tao.getSolutionStatus()[2] / tao.getSolutionStatus()[1]
-        < relative_gradient_tolerance
-    ):
-        tao.setConvergedReason(4)
-
-    elif tao.getSolutionStatus()[2] < absolute_gradient_tolerance:
-        tao.setConvergedReason(3)
+    pass
 
 
 def _translate_tao_convergence_reason(tao_resaon):
@@ -306,7 +250,6 @@ def _process_pounders_results(residuals_out, tao):
             convergence_reason if convergence_code >= 0 else None
         ),
         "message": convergence_reason,
-        # Further results.
         "solution_criterion_values": residuals_out.array,
         "gradient_norm": tao.gnorm,
         "criterion_norm": tao.cnorm,

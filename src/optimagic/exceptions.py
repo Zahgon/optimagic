@@ -3,84 +3,79 @@ from traceback import format_exception
 
 
 class OptimagicError(Exception):
-    """Base exception for optimagic which should be inherited by all exceptions."""
+    pass
 
 
 class TableExistsError(OptimagicError):
-    """Exception for database tables that should not exist but do."""
+    pass
 
 
 class InvalidFunctionError(OptimagicError):
-    """Exception for invalid user provided functions.
-
-    This includes user functions that do not comply with interfaces, raise errors or
-    produce NaNs.
-
-    """
+    pass
 
 
 class UserFunctionRuntimeError(OptimagicError):
-    """Exception that is raised when user provided functions raise errors."""
+    pass
 
 
 class MissingInputError(OptimagicError):
-    """Exception for missing user provided input."""
+    pass
 
 
 class AliasError(OptimagicError):
-    """Exception for aliasing errors."""
+    pass
 
 
 class InvalidKwargsError(OptimagicError):
-    """Exception for invalid user provided keyword arguments."""
+    pass
 
 
 class InvalidParamsError(OptimagicError):
-    """Exception for invalid user provided parameters."""
+    pass
 
 
 class InvalidConstraintError(OptimagicError):
-    """Exception for invalid user provided constraints."""
+    pass
 
 
 class InvalidBoundsError(OptimagicError):
-    """Exception for invalid user provided bounds."""
+    pass
 
 
 class IncompleteBoundsError(OptimagicError):
-    """Exception when user provided bounds are incomplete."""
+    pass
 
 
 class InvalidScalingError(OptimagicError):
-    """Exception for invalid user provided scaling."""
+    pass
 
 
 class InvalidMultistartError(OptimagicError):
-    """Exception for invalid user provided multistart options."""
+    pass
 
 
 class InvalidNumdiffOptionsError(OptimagicError):
-    """Exception for invalid user provided numdiff options."""
+    pass
 
 
 class NotInstalledError(OptimagicError):
-    """Exception when optional dependencies are needed but not installed."""
+    pass
 
 
 class NotAvailableError(OptimagicError):
-    """Exception when something is not available, e.g. because a calculation failed."""
+    pass
 
 
 class InvalidAlgoOptionError(OptimagicError):
-    """Exception for invalid user provided algorithm options."""
+    pass
 
 
 class InvalidAlgoInfoError(OptimagicError):
-    """Exception for invalid user provided algorithm information."""
+    pass
 
 
 class InvalidPlottingBackendError(OptimagicError):
-    """Exception for invalid user provided plotting backend."""
+    pass
 
 
 class StopOptimizationError(OptimagicError):

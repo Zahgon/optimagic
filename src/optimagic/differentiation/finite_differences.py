@@ -1,13 +1,3 @@
-"""Finite difference formulae for jacobians and hessians.
-
-All functions in this module should not only work for the simple case of one positive
-and/or one negative step, but also for the Richardson Extrapolation case with several
-positive and/or several negative steps.
-
-Since steps and evals contain NaNs, we have to make sure that the functions do not raise
-warnings or errors for that case.
-
-"""
 
 from typing import NamedTuple
 
@@ -106,7 +96,6 @@ def hessian(evals, steps, f0, method):
     n_steps, dim_f, dim_x = evals["one_step"].pos.shape
     f0 = f0.reshape(1, dim_f, 1, 1)
 
-    # rename variables to increase readability in formulas
     evals_one = Evals(
         pos=np.expand_dims(evals["one_step"].pos, axis=3),
         neg=np.expand_dims(evals["one_step"].neg, axis=3),

@@ -1,19 +1,3 @@
-"""Process the user provided pc for use during the optimization.
-
-The main purpose of this module is to convert the user provided constraints into inputs
-for fast reparametrization functions. In the process, the constraints are checked and
-consolidated. Consolidation means that redundant constraints are dropped and other
-constraints are collected in meaningful bundles.
-
-To improve readability, the actual code for checking and consolidation are in separate
-modules.
-
-Calls to functions doing checking are scattered across the module. This is in order to
-perform each check as soon as it becomes possible, which allows errors to be raised at a
-point where constraints still look similar to what users wrote. However, some checks can
-only be done after consolidation.
-
-"""
 
 import numpy as np
 import pandas as pd
@@ -77,7 +61,6 @@ def process_constraints(
     constraints = _process_linear_weights(constraints)
     check_constraints_are_satisfied(constraints, params_vec, param_names)
     constraints = _replace_increasing_and_decreasing_by_linear(constraints)
-    # process newly generated linear constraints
     constraints = _process_linear_weights(constraints)
 
     transformations, constr_info = consolidate_constraints(
@@ -233,9 +216,6 @@ def _create_internal_bounds(lower, upper, constraints):
 
     for constr in constraints:
         if constr["type"] in ["covariance", "sdcorr"]:
-            # Note that the diagonal positions are the same for covariance and sdcorr
-            # because the internal params contains the Cholesky factor of the implied
-            # covariance matrix in both cases.
             dim = number_of_triangular_elements_to_dimension(len(constr["index"]))
             diag_positions = [0, *np.cumsum(range(2, dim + 1)).tolist()]
             diag_indices = np.array(constr["index"])[diag_positions].tolist()

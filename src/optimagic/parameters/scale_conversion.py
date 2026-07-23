@@ -39,10 +39,7 @@ class ScaleConverter:
     def derivative_from_internal(
         self, derivative: NDArray[np.float64]
     ) -> NDArray[np.float64]:
-        """Scale a derivative vector from internal scale to external one."""
-        if self.factor is not None:
-            derivative = derivative / self.factor
-        return derivative
+        pass
 
 
 def get_scale_converter(
@@ -62,7 +59,6 @@ def get_scale_converter(
         InternalParams: Dataclass with internal parameter values and bounds.
 
     """
-    # fast path
     if scaling is None:
         return ScaleConverter(factor=None, offset=None), internal_params
 

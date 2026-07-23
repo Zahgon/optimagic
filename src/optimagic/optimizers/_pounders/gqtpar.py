@@ -1,4 +1,3 @@
-"""Auxiliary functions for the quadratic GQTPAR trust-region subsolver."""
 
 from typing import NamedTuple
 
@@ -69,9 +68,6 @@ def gqtpar(model, x_candidate, *, k_easy=0.1, k_hard=0.2, maxiter=200):
     """
     hessian_info = HessianInfo()
 
-    # Small floating point number signaling that for vectors smaller
-    # than that backward substituition is not reliable.
-    # See Golub, G. H., Van Loan, C. F. (2013), "Matrix computations", p.165.
     zero_threshold = (
         model.square_terms.shape[0]
         * np.finfo(float).eps

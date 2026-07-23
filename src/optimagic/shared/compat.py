@@ -1,9 +1,3 @@
-"""Compatibility module.
-
-Contains wrapper functions to handle compatibility issues between different versions of
-external libraries.
-
-"""
 
 
 def pd_df_map(df, func, na_action=None, **kwargs):

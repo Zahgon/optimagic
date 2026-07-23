@@ -1,12 +1,3 @@
-"""Functions to create, run and visualize optimization benchmarks.
-
-TO-DO:
-- Add other benchmark sets:
-    - finish medium scale problems from https://arxiv.org/pdf/1710.11005.pdf, Page 34.
-    - add scalar problems from https://github.com/AxelThevenot
-- Add option for deterministic noise or wiggle.
-
-"""
 
 import numpy as np
 from pybaum import tree_just_flatten
@@ -189,7 +180,6 @@ def _process_one_result(optimize_result, problem):
     _is_noisy = problem["noisy"]
     _solution_crit = problem["solution"]["value"]
 
-    # This will happen if the optimization raised an error
     if isinstance(optimize_result, str):
         params_history_flat = [tree_just_flatten(_start_x, registry=_registry)]
         criterion_history = [_start_crit_value]

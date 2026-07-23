@@ -1,4 +1,3 @@
-"""Implement Bayesian optimization using bayes_opt."""
 
 from __future__ import annotations
 
@@ -49,31 +48,6 @@ if TYPE_CHECKING:
 )
 @dataclass(frozen=True)
 class BayesOpt(Algorithm):
-    """Minimize a scalar function using Bayesian Optimization with Gaussian Process.
-
-    This optimizer wraps the BayesianOptimization package :cite:`Nogueira2014`,
-    which implements a surrogate model-based global optimization algorithm.
-    It works by constructing a posterior distribution over the objective function
-    via a Gaussian process that best approximates it. Instead of directly optimizing
-    the expensive original function, it uses a proxy optimization problem by finding
-    the maximum of an acquisition function, which is computationally cheaper than
-    evaluating the original function.
-
-    The algorithm starts by sampling a few initial points (init_points) to gather
-    observations of the objective function. These observations are used to fit a
-    Gaussian process surrogate model that learns about the function's behavior. The
-    optimizer then uses an acquisition function to iteratively select promising new
-    points to evaluate, updates its model, and this continues for stopping_maxiter
-    iterations.
-
-    This optimizer is well-suited for expensive functions where each evaluation is
-    costly (simulations, experiments, model training), black-box optimization where
-    gradients are unavailable, and problems with a limited evaluation budget.
-
-    Default parameter values match those of the underlying BayesianOptimization package
-    where appropriate. Nonlinear constraints are currently not supported.
-
-    """
 
     init_points: PositiveInt = 5
     """Number of random points sampled before optimization.
@@ -231,10 +205,7 @@ class BayesOpt(Algorithm):
         constraint = self._process_constraints(problem.nonlinear_constraints)
 
         def objective(**kwargs: dict[str, float]) -> float:
-            x = _extract_params_from_kwargs(kwargs)
-            return -float(
-                problem.fun(x)
-            )  # Negate to convert minimization to maximization
+            pass
 
         bounds_transformer = None
         if self.enable_sdr:
@@ -258,10 +229,8 @@ class BayesOpt(Algorithm):
             allow_duplicate_points=self.allow_duplicate_points,
         )
 
-        # Set Gaussian Process parameters
         optimizer.set_gp_params(alpha=self.alpha, n_restarts_optimizer=self.n_restarts)
 
-        # Use initial point as first probe
         probe_params = {f"param{i}": float(val) for i, val in enumerate(x0)}
         optimizer.probe(
             params=probe_params,
@@ -287,7 +256,6 @@ class BayesOpt(Algorithm):
             None. Nonlinear constraint processing is deferred.
 
         """
-        # TODO: Implement proper handling of nonlinear constraints in future.
         return None
 
 
@@ -423,11 +391,9 @@ def _process_acquisition_function(
         else:
             raise ValueError(f"Unhandled canonical name: {canonical_name}")
 
-    # If acquisition_function is an instance of AcquisitionFunction class
     elif isinstance(acquisition_function, acquisition.AcquisitionFunction):
         return acquisition_function
 
-    # If acquisition_function is a class inheriting from AcquisitionFunction
     elif isinstance(acquisition_function, type) and issubclass(
         acquisition_function, acquisition.AcquisitionFunction
     ):

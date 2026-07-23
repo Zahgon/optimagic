@@ -1,25 +1,3 @@
-"""Define the More-Wild Benchmark Set.
-
-This benchmark set is contains 53 test cases for nonlinear least squares solvers.
-The test cases are built out of 22 functions, originally derived from the CUTEr
-Problems. It was used to benchmark all modern model based non-linear derivative
-free least squares solvers (e.g. POUNDERS, DFOGN, DFOLS).
-
-The parameter dimensions are quite small, varying between 2 and 12.
-
-The benchmark set was first described In More and Wild, 2009. Fortran and Matlab Code
-is available here. We use the following sources of information to construct the
-benchmark set:
-
-- https://www.mcs.anl.gov/~more/dfo/fortran/dfovec.f for the function implementation
-- https://www.mcs.anl.gov/~more/dfo/fortran/dfoxs.f for the base starting points
-- https://www.mcs.anl.gov/~more/dfo/fortran/dfo.dat for:
-    - The mapping test cases to criterion functions (column 1)
-    - The dimensionalities of parameter vectors (column 2)
-    - The dimensionalities of the output (column 3)
-    - Whether the base start vector is multiplied by a factor of ten or not (column 4).
-
-"""
 
 from functools import partial
 
@@ -46,82 +24,42 @@ def linear_rank_one(x, dim_out):
 
 @mark.least_squares
 def linear_rank_one_zero_columns_rows(x, dim_out):
-    dim_in = len(x)
-    sm = (np.arange(2, dim_in) * x[1:-1]).sum()
-    fvec = np.arange(dim_out) * sm - 1.0
-    fvec[-1] = -1.0
-    return fvec
+    pass
 
 
 @mark.least_squares
 def rosenbrock(x):
-    fvec = np.zeros(2)
-    fvec[0] = 10 * (x[1] - x[0] ** 2)
-    fvec[1] = 1.0 - x[0]
-    return fvec
+    pass
 
 
 @mark.least_squares
 def helical_valley(x):
-    temp = 8 * np.arctan(1.0)
-    temp1 = np.sign(x[1]) * 0.25
-    if x[0] > 0:
-        temp1 = np.arctan(x[1] / x[0]) / temp
-    elif x[0] < 0:
-        temp1 = np.arctan(x[1] / x[0]) / temp + 0.5
-    temp2 = np.sqrt(x[0] ** 2 + x[1] ** 2)
-    fvec = np.zeros(3)
-    fvec[0] = 10 * (x[2] - 10 * temp1)
-    fvec[1] = 10 * (temp2 - 1.0)
-    fvec[2] = x[2]
-    return fvec
+    pass
 
 
 @mark.least_squares
 def powell_singular(x):
-    fvec = np.zeros(4)
-    fvec[0] = x[0] + 10 * x[1]
-    fvec[1] = np.sqrt(5.0) * (x[2] - x[3])
-    fvec[2] = (x[1] - 2 * x[2]) ** 2
-    fvec[3] = np.sqrt(10.0) * (x[0] - x[3]) ** 2
-    return fvec
+    pass
 
 
 @mark.least_squares
 def freudenstein_roth(x):
-    fvec = np.zeros(2)
-    fvec[0] = -13 + x[0] + ((5 - x[1]) * x[1] - 2) * x[1]
-    fvec[1] = -29 + x[0] + ((1.0 + x[1]) * x[1] - 14) * x[1]
-    return fvec
+    pass
 
 
 @mark.least_squares
 def bard(x, y):
-    fvec = np.zeros(len(y))
-    for i in range(1, round(len(y) / 2) + 1):
-        temp = len(y) + 1 - i
-        fvec[i - 1] = y[i - 1] - (x[0] + i / (x[1] * temp + x[2] * i))
-    for i in range(round(len(y) / 2) + 1, len(y) + 1):
-        temp = len(y) + 1 - i
-        fvec[i - 1] = y[i - 1] - (x[0] + i / (x[1] * temp + x[2] * temp))
-    return fvec
+    pass
 
 
 @mark.least_squares
 def kowalik_osborne(x, y1, y2):
-    temp1 = y1 * (y1 + x[1])
-    temp2 = y1 * (y1 + x[2]) + x[3]
-    fvec = y2 - x[0] * temp1 / temp2
-    return fvec
+    pass
 
 
 @mark.least_squares
 def meyer(x, y):
-    temp = 5 * np.arange(1, len(y) + 1) + 45 + x[2]
-    temp1 = x[1] / temp
-    temp2 = np.exp(temp1)
-    fvec = x[0] * temp2 - y
-    return fvec
+    pass
 
 
 @mark.least_squares
@@ -140,55 +78,22 @@ def watson(x):
 
 @mark.least_squares
 def box_3d(x, dim_out):
-    fvec = np.zeros(dim_out)
-    for i in range(1, dim_out + 1):
-        fvec[i - 1] = (
-            np.exp(-i / 10 * x[0])
-            - np.exp(-i / 10 * x[1])
-            + (np.exp(-i) - np.exp(-i / 10)) * x[2]
-        )
-    return fvec
+    pass
 
 
 @mark.least_squares
 def jennrich_sampson(x, dim_out):
-    fvec = (
-        2 * (1.0 + np.arange(1, dim_out + 1))
-        - np.exp(np.arange(1, dim_out + 1) * x[0])
-        - np.exp(np.arange(1, dim_out + 1) * x[1])
-    )
-    return fvec
+    pass
 
 
 @mark.least_squares
 def brown_dennis(x, dim_out):
-    fvec = np.zeros(dim_out)
-    for i in range(1, dim_out + 1):
-        temp = i / 5
-        temp_1 = x[0] + temp * x[1] - np.exp(temp)
-        temp_2 = x[2] + np.sin(temp) * x[3] - np.cos(temp)
-        fvec[i - 1] = temp_1**2 + temp_2**2
-    return fvec
+    pass
 
 
 @mark.least_squares
 def chebyquad(x, dim_out):
-    fvec = np.zeros(dim_out)
-    dim_in = len(x)
-    for i in range(1, dim_in + 1):
-        temp_1 = 1.0
-        temp_2 = 2 * x[i - 1] - 1.0
-        temp_3 = 2 * temp_2
-        for j in range(dim_out):
-            fvec[j] = fvec[j] + temp_2
-            temp_4 = temp_3 * temp_2 - temp_1
-            temp_1 = temp_2
-            temp_2 = temp_4
-    for i in range(1, dim_out + 1):
-        fvec[i - 1] = fvec[i - 1] / dim_in
-        if i % 2 == 0:
-            fvec[i - 1] = fvec[i - 1] + 1 / (i**2 - 1.0)
-    return fvec
+    pass
 
 
 @mark.least_squares
@@ -203,99 +108,32 @@ def brown_almost_linear(x):
 
 @mark.least_squares
 def osborne_one(x, y):
-    temp = 10 * np.arange(len(y))
-    temp_1 = np.exp(-x[3] * temp)
-    temp_2 = np.exp(-x[4] * temp)
-    fvec = y - (x[0] + x[1] * temp_1 + x[2] * temp_2)
-    return fvec
+    pass
 
 
 @mark.least_squares
 def osborne_two(x, y):
-    temp_array = np.zeros((4, len(y)))
-    temp = np.arange(len(y)) / 10
-    temp_array[0] = np.exp(-x[4] * temp)
-    temp_array[1] = np.exp(-x[5] * (temp - x[8]) ** 2)
-    temp_array[2] = np.exp(-x[6] * (temp - x[9]) ** 2)
-    temp_array[3] = np.exp(-x[7] * (temp - x[10]) ** 2)
-    fvec = y - (temp_array.T * x[:4]).T.sum(axis=0)
-    return fvec
+    pass
 
 
 @mark.least_squares
 def bdqrtic(x):
-    # the length of array x should be more than 5.
-    dim_in = len(x)
-    fvec = np.zeros(2 * (dim_in - 4))
-    for i in range(dim_in - 4):
-        fvec[i] = -4 * x[i] + 3
-        fvec[dim_in - 4 + i] = (
-            x[i] ** 2
-            + 2 * x[i + 1] ** 2
-            + 3 * x[i + 2] ** 2
-            + 4 * x[i + 3] ** 2
-            + 5 * x[dim_in - 1] ** 2
-        )
-    return fvec
+    pass
 
 
 @mark.least_squares
 def cube(x):
-    fvec = 10 * (x - np.roll(x, 1) ** 3)
-    fvec[0] = x[0] - 1.0
-    return fvec
+    pass
 
 
 @mark.least_squares
 def mancino(x):
-    dim_in = len(x)
-    fvec = np.zeros(dim_in)
-    for i in range(dim_in):
-        sm = 0
-        for j in range(dim_in):
-            temp = np.sqrt(x[i] ** 2 + (i + 1) / (j + 1))
-            sm += temp * ((np.sin(np.log(temp))) ** 5 + (np.cos(np.log(temp))) ** 5)
-        fvec[i] = 1400 * x[i] + (i + 1 - 50) ** 3 + sm
-    return fvec
+    pass
 
 
 @mark.least_squares
 def heart_eight(x, y):
-    dim_y = len(y)
-    fvec = np.zeros(dim_y)
-    fvec[0] = x[0] + x[1] - y[0]
-    fvec[1] = x[2] + x[3] - y[1]
-    fvec[2] = x[4] * x[0] + x[5] * x[1] - x[6] * x[2] - x[7] * x[3] - y[2]
-    fvec[3] = x[6] * x[0] + x[7] * x[1] + x[4] * x[2] + x[5] * x[3] - y[3]
-    fvec[4] = (
-        x[0] * (x[4] ** 2 - x[6] ** 2)
-        - 2 * x[2] * x[4] * x[6]
-        + x[1] * (x[5] ** 2 - x[7] ** 2)
-        - 2 * x[3] * x[5] * x[7]
-        - y[4]
-    )
-    fvec[5] = (
-        x[2] * (x[4] ** 2 - x[6] ** 2)
-        + 2 * x[0] * x[4] * x[6]
-        + x[3] * (x[5] ** 2 - x[7] ** 2)
-        + 2 * x[1] * x[5] * x[7]
-        - y[5]
-    )
-    fvec[6] = (
-        x[0] * x[4] * (x[4] ** 2 - 3 * x[6] ** 2)
-        + x[2] * x[6] * (x[6] ** 2 - 3 * x[4] ** 2)
-        + x[1] * x[5] * (x[5] ** 2 - 3 * x[7] ** 2)
-        + x[3] * x[7] * (x[7] ** 2 - 3 * x[5] ** 2)
-        - y[6]
-    )
-    fvec[7] = (
-        x[2] * x[4] * (x[4] ** 2 - 3 * x[6] ** 2)
-        - x[0] * x[6] * (x[6] ** 2 - 3 * x[4] ** 2)
-        + x[3] * x[5] * (x[5] ** 2 - 3 * x[7] ** 2)
-        - x[1] * x[7] * (x[7] ** 2 - 3 * x[5] ** 2)
-        - y[7]
-    )
-    return fvec
+    pass
 
 
 @mark.least_squares
@@ -531,9 +369,6 @@ watson_6_solution_x = [
 ]
 
 
-# Note: only nlopt_neldermead got close to the correct optimal criterion value.
-# Parameter values might be less precise than others but should be precise enough
-# for all practical purposes.
 watson_9_solution_x = [
     -1.5307729818292037e-05,
     0.9997897038761921,
@@ -547,9 +382,6 @@ watson_9_solution_x = [
 ]
 
 
-# Note: only nlopt_nobyqa got close to the correct optimal criterion value.
-# Parameter values might be less precise than others but should be precise enough
-# for all practical purposes.
 watson_12_solution_x = [
     -1.257374334661004e-07,
     1.000009574359581,
@@ -803,7 +635,6 @@ MORE_WILD_PROBLEMS = {
     "linear_rank_one_good_start": {
         "fun": mark.least_squares(partial(linear_rank_one, dim_out=35)),
         "start_x": [1] * 7,
-        # no unique solution
         "solution_x": None,
         "start_criterion": 1.165420e7,
         "solution_criterion": 8.380281690143324,
@@ -811,7 +642,6 @@ MORE_WILD_PROBLEMS = {
     "linear_rank_one_bad_start": {
         "fun": mark.least_squares(partial(linear_rank_one, dim_out=35)),
         "start_x": [10] * 7,
-        # no unique solution
         "solution_x": None,
         "start_criterion": 1.168591e9,
         "solution_criterion": 8.380282,
@@ -821,7 +651,6 @@ MORE_WILD_PROBLEMS = {
             partial(linear_rank_one_zero_columns_rows, dim_out=35)
         ),
         "start_x": [1] * 7,
-        # no unique solution
         "solution_x": None,
         "start_criterion": 4.989195e6,
         "solution_criterion": 9.880597014926506,
@@ -831,7 +660,6 @@ MORE_WILD_PROBLEMS = {
             partial(linear_rank_one_zero_columns_rows, dim_out=35)
         ),
         "start_x": [10] * 7,
-        # no unique solution
         "solution_x": None,
         "start_criterion": 5.009356e8,
         "solution_criterion": 9.880597014926506,

@@ -14,16 +14,6 @@ from optimagic.config import PLOTLY_TEMPLATE
 
 @dataclass(frozen=True)
 class LineData:
-    """Data of a single line.
-
-    Attributes:
-        x: The x-coordinates of the points.
-        y: The y-coordinates of the points.
-        color: The color of the line. Default is None.
-        name: The name of the line. Default is None.
-        show_in_legend: Whether to show the line in the legend. Default is True.
-
-    """
 
     x: np.ndarray
     y: np.ndarray
@@ -34,15 +24,6 @@ class LineData:
 
 @dataclass(frozen=True)
 class MarkerData:
-    """Data of a single marker.
-
-    Attributes:
-        x: The x-coordinate of the marker.
-        y: The y-coordinate of the marker.
-        color: The color of the marker. Default is None.
-        name: The name of the marker. Default is None.
-
-    """
 
     x: float
     y: float
@@ -224,15 +205,12 @@ def create_grid_plot(
         traces = ind_list[ind]
         for trace in range(len(traces)):
             fig.add_trace(traces[trace], row=facet_row, col=facet_col)
-            # style axis labels
             fig.update_xaxes(row=facet_row, col=facet_col, title=x_title[ind])
             fig.update_yaxes(row=facet_row, col=facet_col, title=y_title[ind])
 
-    # deleting duplicates in legend
     if clean_legend:
         fig = _clean_legend_duplicates(fig)
 
-    # scientific notations for axis ticks
     if scientific_notation:
         fig.update_yaxes(tickformat=".2e")
         fig.update_xaxes(tickformat=".2e")
@@ -240,7 +218,6 @@ def create_grid_plot(
     if share_xax:
         fig.update_xaxes(range=[x_min, x_max])
 
-    # setting template theme and size
     fig.update_layout(**kws)
 
     return fig
@@ -293,20 +270,16 @@ def create_ind_dict(
         traces = ind_list[ind]
         for trace in range(len(traces)):
             fig.add_trace(traces[trace])
-        # adding title and styling axes and theme
         fig.update_layout(
             title=names[ind], xaxis_title=x_title[ind], yaxis_title=y_title[ind], **kws
         )
-        # scientific notations for axis ticks
         if scientific_notation:
             fig.update_yaxes(tickformat=".2e")
             fig.update_xaxes(tickformat=".2e")
-        # deleting duplicates in legend
         if clean_legend:
             fig = _clean_legend_duplicates(fig)
         if share_xax:
             fig.update_xaxes(range=[x_min, x_max])
-        # adding to dictionary
         key = names[ind].replace(" ", "_").lower()
         fig_dict[key] = fig
 
@@ -317,11 +290,7 @@ def _clean_legend_duplicates(fig):
     trace_names = set()
 
     def disable_legend_if_duplicate(trace):
-        if trace.name in trace_names:
-            # in this case the legend is a duplicate
-            trace.update(showlegend=False)
-        else:
-            trace_names.add(trace.name)
+        pass
 
     fig.for_each_trace(disable_legend_if_duplicate)
     return fig

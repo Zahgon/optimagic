@@ -1,4 +1,3 @@
-"""Aggregate the multiple parameter and function output conversions into on."""
 
 from dataclasses import dataclass, replace
 from typing import Callable
@@ -89,8 +88,6 @@ def get_converter(
         param_names=internal_params.names,
     )
 
-    # Temporary seam during the constraints refactoring: checking and consolidation
-    # still work on the deprecated dictionary representation of constraints.
     flat_constraints = to_legacy_dicts(resolved_constraints)
 
     space_converter, internal_params = get_space_converter(
@@ -103,43 +100,13 @@ def get_converter(
     )
 
     def _params_to_internal(params):
-        x_flat = tree_converter.params_flatten(params)
-        x_internal = space_converter.params_to_internal(x_flat)
-        x_scaled = scale_converter.params_to_internal(x_internal)
-        return x_scaled
+        pass
 
     def _params_from_internal(x, return_type="tree"):
-        x_unscaled = scale_converter.params_from_internal(x)
-        x_external = space_converter.params_from_internal(x_unscaled)
-
-        x_tree = tree_converter.params_unflatten(x_external)
-        if return_type == "tree":
-            out = x_tree
-        elif return_type == "tree_and_flat":
-            out = x_tree, x_external
-        elif return_type == "flat":
-            out = x_external
-        else:
-            msg = (
-                f"Invalid return type: {return_type}. Must be one of 'tree', 'flat', "
-                "'tree_and_flat'"
-            )
-            raise ValueError(msg)
-        return out
+        pass
 
     def _derivative_to_internal(derivative_eval, x, jac_is_flat=False):
-        if jac_is_flat:
-            jacobian = derivative_eval
-        else:
-            jacobian = tree_converter.derivative_flatten(derivative_eval)
-        x_unscaled = scale_converter.params_from_internal(x)
-        jac_with_space_conversion = space_converter.derivative_to_internal(
-            jacobian, x_unscaled
-        )
-        jac_with_unscaling = scale_converter.derivative_to_internal(
-            jac_with_space_conversion
-        )
-        return jac_with_unscaling
+        pass
 
     internal_params = replace(scaled_params, free_mask=internal_params.free_mask)
 
@@ -162,11 +129,7 @@ class Converter:
 
 
 def _fast_params_from_internal(x, return_type="tree"):
-    x = x.astype(float)
-    if return_type == "tree_and_flat":
-        return x, x
-    else:
-        return x
+    pass
 
 
 def _get_fast_path_converter(params, bounds, solver_type):
@@ -175,8 +138,7 @@ def _get_fast_path_converter(params, bounds, solver_type):
         x,  # noqa: ARG001
         jac_is_flat=True,  # noqa: ARG001
     ):
-        # make signature compatible with non-fast path
-        return derivative_eval
+        pass
 
     converter = Converter(
         params_to_internal=lambda params: params.astype(float),
@@ -231,7 +193,6 @@ def _is_fast_path(
 
 
 def _is_fast_deriv_eval(d, solver_type):
-    # this is the case if no or closed form derivatives are used
     if d is None:
         return True
 

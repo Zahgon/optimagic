@@ -273,44 +273,11 @@ def _get_scaling_factor(x, options):
 def _internal_criterion_template(
     params, criterion, additive_options, multiplicative_options, scaling_factor, rng
 ):
-    if scaling_factor is not None:
-        params = params / scaling_factor
-
-    critval = criterion(params)
-
-    noise = _get_combined_noise(
-        critval,
-        additive_options=additive_options,
-        multiplicative_options=multiplicative_options,
-        rng=rng,
-    )
-
-    noisy_critval = critval + noise
-
-    return noisy_critval
+    pass
 
 
 def _get_combined_noise(fval, additive_options, multiplicative_options, rng):
-    size = len(np.atleast_1d(fval))
-    if multiplicative_options is not None:
-        options = multiplicative_options.copy()
-        std = options.pop("std")
-        clipval = options.pop("clipping_value")
-        scaled_std = std * _clip_away_from_zero(fval, clipval)
-        multiplicative_noise = _sample_from_distribution(
-            **options, std=scaled_std, size=size, rng=rng
-        )
-    else:
-        multiplicative_noise = 0
-
-    if additive_options is not None:
-        additive_noise = _sample_from_distribution(
-            **additive_options, size=size, rng=rng
-        )
-    else:
-        additive_noise = 0
-
-    return multiplicative_noise + additive_noise
+    pass
 
 
 def _sample_from_distribution(distribution, mean, std, size, rng, correlation=0):
@@ -363,14 +330,4 @@ def _process_noise_options(options, is_multiplicative):
 
 
 def _clip_away_from_zero(a, clipval):
-    is_scalar = np.isscalar(a)
-    a = np.atleast_1d(a)
-
-    is_positive = a >= 0
-
-    clipped = np.where(is_positive, np.clip(a, clipval, np.inf), a)
-    clipped = np.where(~is_positive, np.clip(clipped, -np.inf, -clipval), clipped)
-
-    if is_scalar:
-        clipped = clipped[0]
-    return clipped
+    pass

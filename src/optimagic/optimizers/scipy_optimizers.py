@@ -1,37 +1,3 @@
-"""Implement scipy algorithms.
-
-The following ``scipy`` algorithms are not supported because they
-require the specification of the Hessian:
-
-- dogleg
-- trust-ncg
-- trust-exact
-- trust-krylov
-
-The following arguments are not supported as part of ``algo_options``:
-
-- ``disp``
-    If set to True would print a convergence message.
-    In optimagic it's always set to its default False.
-    Refer to optimagic's result dictionary's "success" entry for the convergence
-    message.
-- ``return_all``
-    If set to True, a list of the best solution at each iteration is returned.
-    In optimagic it's always set to its default False.
-- ``tol``
-    This argument of minimize (not an options key) is passed as different types of
-    tolerance (gradient, parameter or criterion, as well as relative or absolute)
-    depending on the selected algorithm. We require the user to explicitely input
-    the tolerance criteria or use our defaults instead.
-- ``args``
-    This argument of minimize (not an options key) is partialed into the function
-    for the user. Specify ``criterion_kwargs`` in ``maximize`` or ``minimize`` to
-    achieve the same behavior.
-- ``callback``
-    This argument would be called after each iteration and the algorithm would
-    terminate if it returned True.
-
-"""
 
 from __future__ import annotations
 
@@ -103,30 +69,6 @@ from optimagic.utilities import calculate_trustregion_initial_radius
 )
 @dataclass(frozen=True)
 class ScipyLBFGSB(Algorithm):
-    """Minimize a scalar differentiable function using the L-BFGS-B algorithm.
-
-    The optimizer is taken from scipy, which calls the Fortran code written by the
-    original authors of the algorithm. The Fortran code includes the corrections
-    and improvements that were introduced in a follow up paper.
-
-    lbfgsb is a limited memory version of the original bfgs algorithm, that deals with
-    lower and upper bounds via an active set approach.
-
-    The lbfgsb algorithm is well suited for differentiable scalar optimization problems
-    with up to several hundred parameters.
-
-    It is a quasi-newton line search algorithm. At each trial point it evaluates the
-    criterion function and its gradient to find a search direction. It then approximates
-    the hessian using the stored history of gradients and uses the hessian to calculate
-    a candidate step size. Then it uses a gradient based line search algorithm to
-    determine the actual step length. Since the algorithm always evaluates the gradient
-    and criterion function jointly, the user should provide a ``fun_and_jac`` function
-    that exploits the synergies in the calculation of criterion and gradient.
-
-    The lbfgsb algorithm is almost perfectly scale invariant. Thus, it is not necessary
-    to scale the parameters.
-
-    """
 
     convergence_ftol_rel: NonNegativeFloat = CONVERGENCE_FTOL_REL
     r"""Converge if the relative change in the objective function is less than this
@@ -263,7 +205,6 @@ class ScipyNelderMead(Algorithm):
             "maxfev": self.stopping_maxfun,
             "xatol": self.convergence_xtol_abs,
             "fatol": self.convergence_ftol_abs,
-            # TODO: Benchmark if adaptive = True works better
             "adaptive": self.adaptive,
             "disp": self.display,
         }
@@ -469,7 +410,6 @@ class ScipyCOBYLA(Algorithm):
     def _solve_internal_problem(
         self, problem: InternalOptimizationProblem, x0: NDArray[np.float64]
     ) -> InternalOptimizeResult:
-        # TODO: Maybe we should leave the radius at their default
         if self.trustregion_initial_radius is None:
             radius = calculate_trustregion_initial_radius(x0)
         else:
@@ -481,7 +421,6 @@ class ScipyCOBYLA(Algorithm):
             "disp": self.display,
         }
 
-        # cannot handle equality constraints
         nonlinear_constraints = equality_as_inequality_constraints(
             problem.nonlinear_constraints
         )
@@ -536,7 +475,6 @@ class ScipyLSTRF(Algorithm):
         raw_res = scipy.optimize.least_squares(
             fun=problem.fun,
             x0=x0,
-            # This optimizer does not work with fun_and_jac
             jac=problem.jac,
             bounds=(lower_bounds, upper_bounds),
             method="trf",
@@ -589,7 +527,6 @@ class ScipyLSDogbox(Algorithm):
         raw_res = scipy.optimize.least_squares(
             fun=problem.fun,
             x0=x0,
-            # This optimizer does not work with fun_and_jac
             jac=problem.jac,
             bounds=(lower_bounds, upper_bounds),
             method="dogbox",
@@ -632,7 +569,6 @@ class ScipyLSLM(Algorithm):
         raw_res = scipy.optimize.least_squares(
             fun=problem.fun,
             x0=x0,
-            # This optimizer does not work with fun_and_jac
             jac=problem.jac,
             method="lm",
             max_nfev=self.stopping_maxfun,
@@ -670,7 +606,6 @@ class ScipyTruncatedNewton(Algorithm):
     line_search_severity: float = -1
     finite_difference_precision: NonNegativeFloat = 0
     criterion_rescale_factor: float = -1
-    # TODO: Check type hint for `func_min_estimate`
     func_min_estimate: float = 0
     display: bool = False
 
@@ -720,7 +655,6 @@ class ScipyTruncatedNewton(Algorithm):
 )
 @dataclass(frozen=True)
 class ScipyTrustConstr(Algorithm):
-    # TODO: Check if can be set to CONVERGENCE_GTOL_ABS
     convergence_gtol_abs: NonNegativeFloat = 1e-08
     convergence_xtol_rel: NonNegativeFloat = CONVERGENCE_XTOL_REL
     stopping_maxiter: PositiveInt = STOPPING_MAXITER
@@ -743,7 +677,6 @@ class ScipyTrustConstr(Algorithm):
             "disp": self.display,
         }
 
-        # cannot handle equality constraints
         nonlinear_constraints = equality_as_inequality_constraints(
             problem.nonlinear_constraints
         )
@@ -771,7 +704,6 @@ def process_scipy_result(scipy_res: ScipyOptimizeResult) -> InternalOptimizeResu
         n_jac_evals=_int_if_not_none(scipy_res.get("njev")),
         n_hess_evals=_int_if_not_none(scipy_res.get("nhev")),
         n_iterations=_int_if_not_none(scipy_res.get("nit")),
-        # TODO: Pass on more things once we can convert them to external
         status=None,
         jac=None,
         hess=None,
@@ -979,12 +911,10 @@ class ScipyDifferentialEvolution(Algorithm):
     stopping_maxiter: PositiveInt = STOPPING_MAXFUN_GLOBAL
     population_size_multiplier: NonNegativeInt = 15
     convergence_ftol_rel: NonNegativeFloat = 0.01
-    # TODO: Refine type to add ranges [0,2] if float.
     mutation_constant: NonNegativeFloat | Tuple[NonNegativeFloat, NonNegativeFloat] = (
         0.5,
         1,
     )
-    # TODO: Refine type to add ranges [0,1].
     recombination_constant: NonNegativeFloat = 0.7
     seed: int | np.random.Generator | np.random.RandomState | None = None
     polish: bool = True
@@ -1166,13 +1096,9 @@ class ScipyDualAnnealing(Algorithm):
         | Callable
     ) = "L-BFGS-B"
     local_algo_options: dict[str, Any] | None = None
-    # TODO: Refine type to add ranges (0.01, 5e4]
     initial_temperature: PositiveFloat = 5230.0
-    # TODO: Refine type to add ranges (0,1)
     restart_temperature_ratio: PositiveFloat = 2e-05
-    # TODO: Refine type to add ranges (1, 3]
     visit: PositiveFloat = 2.62
-    # TODO: Refine type to add ranges (-1e4, -5]
     accept: NegativeFloat = -5.0
     stopping_maxfun: PositiveInt = STOPPING_MAXFUN
     seed: int | np.random.Generator | np.random.RandomState | None = None
@@ -1232,11 +1158,8 @@ class ScipyDirect(Algorithm):
     stopping_maxiter: PositiveInt = STOPPING_MAXFUN_GLOBAL
     locally_biased: bool = True
     convergence_minimum_criterion_value: float = -np.inf
-    # TODO: must be between 0 and 1
     convergence_minimum_criterion_tolerance: NonNegativeFloat = 1e-4
-    # TODO: must be between 0 and 1
     volume_hyperrectangle_tolerance: NonNegativeFloat = 1e-16
-    # TODO: must be between 0 and 1
     length_hyperrectangle_tolerance: NonNegativeFloat = 1e-6
 
     def _solve_internal_problem(
@@ -1278,18 +1201,4 @@ def _get_scipy_bounds(bounds: InternalBounds) -> ScipyBounds | None:
 
 
 def process_scipy_result_old(scipy_results_obj):
-    # using get with defaults to access dict elements is just a safety measure
-    raw_res = {**scipy_results_obj}
-    processed = {
-        "solution_x": raw_res.get("x"),
-        "solution_criterion": raw_res.get("fun"),
-        "solution_derivative": raw_res.get("jac"),
-        "solution_hessian": raw_res.get("hess"),
-        "n_fun_evals": raw_res.get("nfev"),
-        "n_jac_evals": raw_res.get("njac") or raw_res.get("njev"),
-        "n_iterations": raw_res.get("nit"),
-        "success": raw_res.get("success"),
-        "reached_convergence_criterion": None,
-        "message": raw_res.get("message"),
-    }
-    return processed
+    pass

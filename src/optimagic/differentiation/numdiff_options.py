@@ -12,25 +12,6 @@ from optimagic.typing import BatchEvaluatorLiteral
 
 @dataclass(frozen=True)
 class NumdiffOptions:
-    """Options for numerical differentiation.
-
-    Attributes:
-        method: The method to use for numerical differentiation. Can be "central",
-            "forward", or "backward".
-        step_size: The step size to use for numerical differentiation. If None, the
-            default step size will be used.
-        scaling_factor: The scaling factor to use for numerical differentiation.
-        min_steps: The minimum step size to use for numerical differentiation. If None,
-            the default minimum step size will be used.
-        n_cores: The number of cores to use for numerical differentiation.
-        batch_evaluator: The evaluator to use for batch evaluation. Allowed are
-            "joblib", "pathos", and "threading", or a custom callable.
-
-    Raises:
-        InvalidNumdiffError: If the numdiff options cannot be processed, e.g. because
-            they do not have the correct type.
-
-    """
 
     method: Literal[
         "central", "forward", "backward", "central_cross", "central_average"
@@ -97,56 +78,7 @@ def pre_process_numdiff_options(
 
 
 def _validate_attribute_types_and_values(options: NumdiffOptions) -> None:
-    if options.method not in {
-        "central",
-        "forward",
-        "backward",
-        "central_cross",
-        "central_average",
-    }:
-        raise InvalidNumdiffOptionsError(
-            f"Invalid numdiff `method`: {options.method}. Numdiff `method` must be "
-            "one of 'central', 'forward', 'backward', 'central_cross', or "
-            "'central_average'."
-        )
-
-    if options.step_size is not None and (
-        not isinstance(options.step_size, float) or options.step_size <= 0
-    ):
-        raise InvalidNumdiffOptionsError(
-            f"Invalid numdiff `step_size`: {options.step_size}. Step size must be a "
-            "float greater than 0."
-        )
-
-    if (
-        not isinstance(options.scaling_factor, int | float)
-        or options.scaling_factor <= 0
-    ):
-        raise InvalidNumdiffOptionsError(
-            f"Invalid numdiff `scaling_factor`: {options.scaling_factor}. Scaling "
-            "factor must be an integer or float greater than 0."
-        )
-
-    if options.min_steps is not None and (
-        not isinstance(options.min_steps, float) or options.min_steps <= 0
-    ):
-        raise InvalidNumdiffOptionsError(
-            f"Invalid numdiff `min_steps`: {options.min_steps}. Minimum step "
-            "size must be a float greater than 0."
-        )
-
-    if not isinstance(options.n_cores, int) or options.n_cores <= 0:
-        raise InvalidNumdiffOptionsError(
-            f"Invalid numdiff `n_cores`: {options.n_cores}. Number of cores "
-            "must be an integer greater than 0."
-        )
-
-    try:
-        process_batch_evaluator(options.batch_evaluator)
-    except Exception as e:
-        raise InvalidNumdiffOptionsError(
-            f"Invalid batch evaluator: {options.batch_evaluator}."
-        ) from e
+    pass
 
 
 class NumdiffPurpose(str, Enum):

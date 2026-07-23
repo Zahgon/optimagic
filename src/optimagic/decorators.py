@@ -1,19 +1,3 @@
-"""This module contains various decorators.
-
-There are two kinds of decorators defined in this module which consists of either two or
-three nested functions. The former are decorators without and the latter with arguments.
-
-For more information on decorators, see this `guide
-`_ on https://realpython.com
-
-which
-provides a comprehensive overview.
-
-.. _guide:
-
-https://realpython.com/primer-on-python-decorators/
-
-"""
 
 import functools
 import warnings
@@ -57,30 +41,7 @@ def catch(
     def decorator_catch(func):
         @functools.wraps(func)
         def wrapper_catch(*args, **kwargs):
-            try:
-                res = func(*args, **kwargs)
-            except exclude:
-                raise
-            except exception as e:
-                if onerror is not None:
-                    onerror(e)
-
-                if reraise:
-                    raise e
-
-                tb = get_traceback()
-
-                if warn:
-                    msg = f"The following exception was caught:\n\n{tb}"
-                    warnings.warn(msg)
-
-                if default == "__traceback__":
-                    res = tb
-                elif callable(default):
-                    res = default(*args, **kwargs)
-                else:
-                    res = default
-            return res
+            pass
 
         return wrapper_catch
 
@@ -96,19 +57,19 @@ def unpack(func=None, symbol=None):
 
             @functools.wraps(func)
             def wrapper_unpack(arg):
-                return func(arg)
+                pass
 
         elif symbol == "*":
 
             @functools.wraps(func)
             def wrapper_unpack(arg):
-                return func(*arg)
+                pass
 
         elif symbol == "**":
 
             @functools.wraps(func)
             def wrapper_unpack(arg):
-                return func(**arg)
+                pass
 
         return wrapper_unpack
 
@@ -122,8 +83,7 @@ def deprecated(func, msg):
     def decorator_deprecated(func):
         @functools.wraps(func)
         def wrapper_deprecated(*args, **kwargs):
-            warnings.warn(msg, FutureWarning)
-            return func(*args, **kwargs)
+            pass
 
         return wrapper_deprecated
 

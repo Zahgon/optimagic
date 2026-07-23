@@ -1,4 +1,3 @@
-"""Implementation of the quadratic trustregion solver TRSBOX."""
 
 import numpy as np
 
@@ -70,7 +69,6 @@ def minimize_trust_trsbox(
     need_alt_trust_step = False
     max_iter = 100 * n**2
 
-    # Main Conjugate Gradient loop
     for _ in range(max_iter):
         gradient_projected[x_bounded != 0] = 0
         if beta == 0:

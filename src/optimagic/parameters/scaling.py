@@ -8,21 +8,6 @@ from optimagic.exceptions import InvalidScalingError
 
 @dataclass(frozen=True)
 class ScalingOptions:
-    """Scaling options in optimization problems.
-
-    Attributes:
-        method: The method used for scaling. Can be "start_values" or "bounds". Default
-            is "start_values".
-        clipping_value: The minimum value to which elements are clipped to avoid
-            division by zero. Must be a positive number. Default is 0.1.
-        magnitude: A factor by which the scaled parameters are multiplied to adjust
-            their magnitude. Must be a positive number. Default is 1.0.
-
-    Raises:
-        InvalidScalingError: If scaling options cannot be processed, e.g. because they
-            do not have the correct type.
-
-    """
 
     method: Literal["start_values", "bounds"] = "start_values"
     clipping_value: float = 0.1
@@ -81,23 +66,4 @@ def pre_process_scaling(
 
 
 def _validate_attribute_types_and_values(options: ScalingOptions) -> None:
-    if options.method not in ("start_values", "bounds"):
-        raise InvalidScalingError(
-            f"Invalid scaling method: {options.method}. Valid methods are "
-            "'start_values' and 'bounds'."
-        )
-
-    if (
-        not isinstance(options.clipping_value, int | float)
-        or options.clipping_value <= 0
-    ):
-        raise InvalidScalingError(
-            f"Invalid clipping value: {options.clipping_value}. Clipping value "
-            "must be a positive number."
-        )
-
-    if not isinstance(options.magnitude, int | float) or options.magnitude <= 0:
-        raise InvalidScalingError(
-            f"Invalid scaling magnitude: {options.magnitude}. Scaling magnitude "
-            "must be a positive number."
-        )
+    pass

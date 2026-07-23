@@ -1,11 +1,3 @@
-"""Functions to consolidate user provided constraints.
-
-Consolidation means that redundant constraints are dropped and other constraints are
-collected in meaningful bundles.
-
-Check the module docstring of process_constraints for naming conventions.
-
-"""
 
 import numpy as np
 import pandas as pd
@@ -40,8 +32,6 @@ def consolidate_constraints(
             constraints.
 
     """
-    # None-valued bounds are handled by instantiating them as an -inf and inf array. In
-    # the future, this should be handled more gracefully.
     if lower_bounds is None:
         lower_bounds = fast_numpy_full(len(parvec), fill_value=-np.inf)
     if upper_bounds is None:
@@ -139,7 +129,6 @@ def _consolidate_equality_constraints(equality_constraints):
 
     """
     candidates = [constr["index"] for constr in equality_constraints]
-    # drop constraints that just restrict one parameter to be equal to itself
     candidates = [c for c in candidates if len(c) >= 2]
     merged = _join_overlapping_lists(candidates)
     consolidated = [{"index": sorted(index), "type": "equality"} for index in merged]
@@ -609,19 +598,12 @@ def _drop_redundant_linear_constraints(weights, rhs):
     new_weights = weights.drop_duplicates()
 
     def _consolidate_fix(x):
-        vc = x.value_counts(dropna=True)
-        if len(vc) == 0:
-            return np.nan
-        elif len(vc) == 1:
-            return vc.index[0]
-        else:
-            raise ValueError
+        pass
 
     ub = rhs.groupby("dupl_group")["upper_bound"].min()
     lb = rhs.groupby("dupl_group")["lower_bound"].max()
     fix = rhs.groupby("dupl_group")["value"].apply(_consolidate_fix)
 
-    # remove the bounds for fixed parameters
     ub = ub.where(fix.isnull(), np.inf)
     lb = lb.where(fix.isnull(), -np.inf)
 

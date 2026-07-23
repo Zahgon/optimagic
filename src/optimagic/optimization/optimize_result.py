@@ -15,29 +15,6 @@ from optimagic.utilities import to_pickle
 
 @dataclass
 class OptimizeResult:
-    """Optimization result object.
-
-    **Attributes**
-
-    Attributes:
-        params: The optimal parameters.
-        fun: The optimal criterion value.
-        start_fun: The criterion value at the start parameters.
-        start_params: The start parameters.
-        algorithm: The algorithm used for the optimization.
-        direction: Maximize or minimize.
-        n_free: Number of free parameters.
-        message: Message returned by the underlying algorithm.
-        success: Whether the optimization was successful.
-        n_fun_evals: Number of criterion evaluations.
-        n_jac_evals: Number of derivative evaluations.
-        n_iterations: Number of iterations until termination.
-        history: Optimization history.
-        convergence_report: The convergence report.
-        multistart_info: Multistart information.
-        algorithm_output: Additional algorithm specific information.
-
-    """
 
     params: Any
     fun: float
@@ -67,9 +44,6 @@ class OptimizeResult:
     algorithm_output: Dict[str, Any] | None = None
     logger: LogReader | None = None
 
-    # ==================================================================================
-    # Deprecations
-    # ==================================================================================
 
     @property
     def criterion(self) -> float:
@@ -79,60 +53,41 @@ class OptimizeResult:
 
     @property
     def start_criterion(self) -> float:
-        msg = (
-            "The start_criterion attribute is deprecated. Use the start_fun attribute "
-            "instead."
-        )
-        warnings.warn(msg, FutureWarning)
-        return self.start_fun
+        pass
 
     @property
     def n_criterion_evaluations(self) -> int | None:
-        msg = (
-            "The n_criterion_evaluations attribute is deprecated. Use the n_fun_evals "
-            "attribute instead."
-        )
-        warnings.warn(msg, FutureWarning)
-        return self.n_fun_evals
+        pass
 
     @property
     def n_derivative_evaluations(self) -> int | None:
-        msg = (
-            "The n_derivative_evaluations attribute is deprecated. Use the n_jac_evals "
-            "attribute instead."
-        )
-        warnings.warn(msg, FutureWarning)
-        return self.n_jac_evals
+        pass
 
-    # ==================================================================================
-    # Scipy aliases
-    # ==================================================================================
 
     @property
     def x(self) -> PyTree:
-        return self.params
+        pass
 
     @property
     def x0(self) -> PyTree:
-        return self.start_params
+        pass
 
     @property
     def nfev(self) -> int | None:
-        return self.n_fun_evals
+        pass
 
     @property
     def nit(self) -> int | None:
-        return self.n_iterations
+        pass
 
     @property
     def njev(self) -> int | None:
-        return self.n_jac_evals
+        pass
 
     @property
     def nhev(self) -> int | None:
-        return self.n_hess_evals
+        pass
 
-    # Enable attribute access using dictionary-style notation for scipy compatibility
     def __getitem__(self, key):
         return getattr(self, key)
 
@@ -204,16 +159,6 @@ class OptimizeResult:
 
 @dataclass(frozen=True)
 class MultistartInfo:
-    """Information about the multistart optimization.
-
-    Attributes:
-        start_parameters: List of start parameters for each optimization.
-        local_optima: List of optimization results.
-        exploration_sample: List of parameters used for exploration.
-        exploration_results: List of function values corresponding to exploration.
-        n_optimizations: Number of local optimizations that were run.
-
-    """
 
     start_parameters: list[PyTree]
     local_optima: list[OptimizeResult]
@@ -226,34 +171,11 @@ class MultistartInfo:
 
     @property
     def n_optimizations(self) -> int:
-        return len(self.local_optima)
+        pass
 
 
 def _format_convergence_report(report, algorithm):
-    report = pd.DataFrame.from_dict(report)
-    columns = ["one_step", "five_steps"]
-
-    table = pd_df_map(report[columns], _format_float).astype(str)
-
-    for col in "one_step", "five_steps":
-        table[col] = table[col] + _create_stars(report[col])
-
-    table = table.to_string(justify="center")
-
-    introduction = (
-        f"Independent of the convergence criteria used by {algorithm}, "
-        "the strength of convergence can be assessed by the following criteria:"
-    )
-
-    explanation = (
-        "(***: change <= 1e-10, **: change <= 1e-8, *: change <= 1e-5. "
-        "Change refers to a change between accepted steps. The first column only "
-        "considers the last step. The second column considers the last five steps.)"
-    )
-
-    out = "\n\n".join([introduction, table, explanation])
-
-    return out
+    pass
 
 
 def _create_stars(sr):
@@ -267,5 +189,4 @@ def _create_stars(sr):
 
 
 def _format_float(number):
-    """Round to four significant digits."""
-    return f"{number:.4g}"
+    pass

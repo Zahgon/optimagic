@@ -1,4 +1,3 @@
-"""Auxiliary functions for the pounders algorithm."""
 
 from typing import NamedTuple
 
@@ -257,7 +256,6 @@ def solve_subproblem(
     """
     x0 = np.zeros_like(x_accepted)
 
-    # Normalize bounds. If none provided, use unit cube [-1, 1]
     if lower_bounds is not None:
         lower_bounds = (lower_bounds - x_accepted) / delta
         lower_bounds[lower_bounds < -1] = -1
@@ -270,7 +268,6 @@ def solve_subproblem(
     else:
         upper_bounds = np.ones_like(x_accepted)
 
-    # Check if bounds are valid
     if np.max(lower_bounds - upper_bounds) > 1e-10:
         raise ValueError("Upper bounds < lower bounds in subproblem.")
     if np.max(lower_bounds - x0) > 1e-10:
@@ -303,7 +300,6 @@ def solve_subproblem(
             "Invalid subproblem solver: {solver}. Must be one of bntr, gqtpar."
         )
 
-    # Test bounds post-solution
     if np.max(lower_bounds - result["x"]) > 1e-5:
         raise ValueError("Subproblem solution < lower bounds.")
     if np.max(result["x"] - upper_bounds) > 1e-5:
@@ -373,7 +369,6 @@ def find_affine_points(
 
             proj = np.linalg.norm(x_projected[n_modelpoints:])
 
-            # Add this index to the model
             if proj >= theta1:
                 model_indices[n_modelpoints] = i
                 model_improving_points[:, n_modelpoints] = x_candidate
@@ -452,7 +447,6 @@ def add_geomtery_points_to_make_main_model_fully_linear(
 
         x_candidate = delta * model_improving_points[:, i] + x_accepted
 
-        # Project into feasible region
         if lower_bounds is not None and upper_bounds is not None:
             x_candidate = np.median(
                 np.stack([lower_bounds, x_candidate, upper_bounds]), axis=0
@@ -572,7 +566,6 @@ def get_feature_matrices_residual_model(
     while (n_modelpoints < n_maxinterp) and (point >= 0):
         reject = False
 
-        # Reject any points already in the model
         for i in range(n_params + 1):
             if point == model_indices[i]:
                 reject = True
@@ -602,7 +595,6 @@ def get_feature_matrices_residual_model(
         beta = np.linalg.svd(_n_z_mat.T[n_params + 1 :], compute_uv=False)
 
         if beta[min(n_modelpoints - n_params, n_poly_features) - 1] > theta2:
-            # Accept point
             model_indices[n_modelpoints] = point
             n_z_mat = _n_z_mat
 
@@ -615,7 +607,6 @@ def get_feature_matrices_residual_model(
         np.eye(n_maxinterp)[:, :n_modelpoints],
     )
 
-    # Just-identified case
     if n_modelpoints == (n_params + 1):
         n_z_mat = np.zeros((n_maxinterp, n_poly_features))
         n_z_mat[:n_params, :n_params] = np.eye(n_params)

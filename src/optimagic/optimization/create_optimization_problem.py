@@ -51,22 +51,6 @@ from optimagic.utilities import propose_alternatives
 
 @dataclass(frozen=True)
 class OptimizationProblem:
-    """Collect everything that defines the optimization problem.
-
-    The attributes are very close to the arguments of `maximize` and `minimize` but they
-    are converted to stricter types. For example, the bounds argument that can be a
-    sequence of tuples, a scipy.optimize.Bounds object or an optimagic.Bounds when
-    calling `maximize` or `minimize` is converted to an optimagic.Bounds object.
-
-    All deprecated arguments are removed and all scipy aliases are replaced by their
-    optimagic counterparts.
-
-    All user provided functions are partialled if corresponding `kwargs` dictionaries
-    were provided.
-
-    # TODO: Document attributes after other todos are resolved.
-
-    """
 
     fun: Callable[[PyTree], SpecificFunctionValue]
     params: PyTree
@@ -76,7 +60,6 @@ class OptimizationProblem:
     jac: Callable[[PyTree], PyTree] | None
     fun_and_jac: Callable[[PyTree], tuple[SpecificFunctionValue, PyTree]] | None
     numdiff_options: NumdiffOptions
-    # TODO: logging will become None | Logger and log_options will be removed
     error_handling: ErrorHandling
     logging: LogOptions | None
     error_penalty: dict[str, Any] | None
@@ -110,18 +93,14 @@ def create_optimization_problem(
     multistart,
     collect_history,
     skip_checks,
-    # scipy aliases
     x0,
     method,
     args,
-    # scipy arguments that are not yet supported
     hess,
     hessp,
     callback,
-    # scipy arguments that will never be supported
     options,
     tol,
-    # deprecated arguments
     criterion,
     criterion_kwargs,
     derivative,
@@ -136,9 +115,6 @@ def create_optimization_problem(
     scaling_options,
     multistart_options,
 ):
-    # ==================================================================================
-    # error handling needed as long as fun is an optional argument
-    # ==================================================================================
 
     if fun_and_jac is None and fun is None and criterion is None:
         msg = (
@@ -169,9 +145,6 @@ def create_optimization_problem(
             )
         fun = split_fun_and_jac(fun_and_jac, target="fun")
 
-    # ==================================================================================
-    # deprecations
-    # ==================================================================================
 
     if log_options is not None:
         logging = handle_log_options_throw_deprecated_warning(log_options, logging)
@@ -233,9 +206,6 @@ def create_optimization_problem(
         fun_and_jac = deprecations.replace_and_warn_about_deprecated_derivatives(
             fun_and_jac, "fun_and_jac"
         )
-    # ==================================================================================
-    # handle scipy aliases
-    # ==================================================================================
 
     if x0 is not None:
         if params is not None:
@@ -274,18 +244,12 @@ def create_optimization_problem(
             kwargs = get_kwargs_from_args(args, fun, offset=1)
             fun_kwargs, jac_kwargs, fun_and_jac_kwargs = kwargs, kwargs, kwargs
 
-    # jac is not an alias but we need to handle the case where `jac=True`, i.e. fun is
-    # actually fun_and_jac. This is not recommended in optimagic because then optimizers
-    # cannot evaluate fun in isolation but we can easily support it for compatibility.
     if jac is True:
         jac = None
         if fun_and_jac is None:
             fun_and_jac = fun
             fun = split_fun_and_jac(fun_and_jac, target="fun")
 
-    # ==================================================================================
-    # Handle scipy arguments that are not yet implemented
-    # ==================================================================================
 
     if hess is not None:
         msg = (
@@ -311,12 +275,8 @@ def create_optimization_problem(
         )
         raise NotImplementedError(msg)
 
-    # ==================================================================================
-    # Handle scipy arguments that will never be supported
-    # ==================================================================================
 
     if options is not None:
-        # TODO: Add link to a how-to guide or tutorial for this
         msg = (
             "The options argument is not supported in optimagic. Please use the "
             "algo_options argument instead."
@@ -324,7 +284,6 @@ def create_optimization_problem(
         raise NotImplementedError(msg)
 
     if tol is not None:
-        # TODO: Add link to a how-to guide or tutorial for this
         msg = (
             "The tol argument is not supported in optimagic. Please use "
             "algo_options or configured algorithms instead to set convergence criteria "
@@ -332,14 +291,8 @@ def create_optimization_problem(
         )
         raise NotImplementedError(msg)
 
-    # ==================================================================================
-    # Convert literals to enums
-    # ==================================================================================
     error_handling = ErrorHandling(error_handling)
 
-    # ==================================================================================
-    # Set default values and check options
-    # ==================================================================================
     bounds = pre_process_bounds(bounds)
     scaling = pre_process_scaling(scaling)
     multistart = pre_process_multistart(multistart)
@@ -360,9 +313,6 @@ def create_optimization_problem(
         log_path = Path(logging)
         logging = SQLiteLogOptions(log_path)
 
-    # ==================================================================================
-    # evaluate fun for the first time
-    # ==================================================================================
     fun = partial_func_of_params(
         func=fun,
         kwargs=fun_kwargs,
@@ -370,9 +320,6 @@ def create_optimization_problem(
         skip_checks=skip_checks,
     )
 
-    # This should be done as late as possible; It has to be done here to infer the
-    # problem type until the decorator approach becomes mandatory.
-    # TODO: Move this into `_optimize` as soon as we reach 0.6.0
     try:
         fun_eval = fun(params)
     except (KeyboardInterrupt, SystemExit):
@@ -384,9 +331,6 @@ def create_optimization_problem(
     if deprecations.is_dict_output(fun_eval):
         deprecations.throw_dict_output_warning()
 
-    # ==================================================================================
-    # infer the problem type
-    # ==================================================================================
 
     if deprecations.is_dict_output(fun_eval):
         problem_type = deprecations.infer_problem_type_from_dict_output(fun_eval)
@@ -399,10 +343,6 @@ def create_optimization_problem(
     ):
         raise InvalidFunctionError("Least-squares problems cannot be maximized.")
 
-    # ==================================================================================
-    # process the fun_eval; Can be removed once the first evaluation gets moved to
-    # a later point where the `enforce` decorator has already been applied.
-    # ==================================================================================
     if deprecations.is_dict_output(fun_eval):
         fun_eval = deprecations.convert_dict_to_function_value(fun_eval)
         fun = deprecations.replace_dict_output(fun)
@@ -411,9 +351,6 @@ def create_optimization_problem(
 
     fun = enforce_return_type(problem_type)(fun)
 
-    # ==================================================================================
-    # Process the user provided algorithm
-    # ==================================================================================
 
     algorithm = pre_process_user_algorithm(algorithm)
     algorithm = algorithm.with_option_if_applicable(**algo_options)
@@ -433,9 +370,6 @@ def create_optimization_problem(
                 "Least-squares solvers can only be used with least-squares problems."
             )
 
-    # ==================================================================================
-    # select the correct derivative functions
-    # ==================================================================================
 
     if jac is not None:
         jac = pre_process_derivatives(
@@ -449,9 +383,6 @@ def create_optimization_problem(
             solver_type=algorithm.algo_info.solver_type,
         )
 
-    # ==================================================================================
-    # partial the kwargs into corresponding functions
-    # ==================================================================================
 
     if jac is not None:
         jac = partial_func_of_params(
@@ -474,9 +405,6 @@ def create_optimization_problem(
             fun_and_jac
         )
 
-    # ==================================================================================
-    # Check types of arguments
-    # ==================================================================================
 
     if not skip_checks:
         if params is None:
@@ -529,9 +457,6 @@ def create_optimization_problem(
         if not isinstance(collect_history, bool):
             raise ValueError("collect_history must be a boolean")
 
-    # ==================================================================================
-    # create the problem object
-    # ==================================================================================
 
     problem = OptimizationProblem(
         fun=fun,
@@ -586,9 +511,6 @@ def pre_process_user_algorithm(
     """Process the user specfied algorithm."""
     if isinstance(algorithm, str):
         try:
-            # Use ALL_ALGORITHMS and not just AVAILABLE_ALGORITHMS such that the
-            # algorithm specific error message with installation instruction will be
-            # reached if an optional dependency is not installed.
             algorithm = ALL_ALGORITHMS[algorithm]()
         except KeyError:
             proposed = propose_alternatives(algorithm, list(ALL_ALGORITHMS))

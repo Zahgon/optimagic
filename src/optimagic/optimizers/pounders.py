@@ -1,4 +1,3 @@
-"""Implement the POUNDERS algorithm."""
 
 import warnings
 from dataclasses import dataclass
@@ -57,10 +56,8 @@ from optimagic.typing import (
 class Pounders(Algorithm):
     convergence_gtol_abs: NonNegativeFloat = 1e-8
     convergence_gtol_rel: NonNegativeFloat = 1e-8
-    # TODO: Why can this a bool
     convergence_gtol_scaled: NonNegativeFloat | bool = False
     max_interpolation_points: PositiveInt | None = None
-    # TODO: Why is this not higher?
     stopping_maxiter: PositiveInt = 2_000
     trustregion_initial_radius: PositiveFloat = 0.1
     trustregion_minimal_radius: PositiveFloat = 1e-6
@@ -379,10 +376,6 @@ def internal_solve_pounders(
 
         critval_accepted = history.get_critvals(index=accepted_index)
 
-        # The model is deemend "not valid" if it has less than n model points.
-        # Otherwise, if the model has n points, it is considered "valid" or
-        # "fully linear" or "just identified".
-        # Note: valid is True in the first iteration
         if not valid:
             (
                 model_improving_points,

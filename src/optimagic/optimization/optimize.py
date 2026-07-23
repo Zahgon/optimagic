@@ -1,16 +1,3 @@
-"""Public functions for optimization.
-
-This module defines the public functions `maximize` and `minimize` that will be called
-by users.
-
-Internally, `maximize` and `minimize` just call `create_optimization_problem` with
-all arguments and add the `direction`. In `create_optimization_problem`, the user input
-is consolidated and converted to stricter types.  The resulting `OptimizationProblem`
-is then passed to `_optimize` which handles the optimization logic.
-
-`_optimize` processes the optimization problem and performs the actual optimization.
-
-"""
 
 from __future__ import annotations
 
@@ -76,7 +63,6 @@ ConstraintsType = Constraint | list[Constraint] | dict[str, Any] | list[dict[str
 JacType = Callable[..., PyTree]
 FunAndJacType = Callable[..., tuple[float | PyTree | FunctionValue, PyTree]]
 HessType = Callable[..., PyTree]
-# TODO: refine this type
 CallbackType = Callable[..., Any]
 
 CriterionType = Callable[..., float | dict[str, Any]]
@@ -100,7 +86,6 @@ def maximize(
     fun_and_jac: FunAndJacType | CriterionAndDerivativeType | None = None,
     fun_and_jac_kwargs: dict[str, Any] | None = None,
     numdiff_options: NumdiffOptions | NumdiffOptionsDict | None = None,
-    # TODO: add typed-dict support?
     logging: bool | str | Path | LogOptions | dict[str, Any] | None = None,
     error_handling: ErrorHandling | ErrorHandlingLiteral = ErrorHandling.RAISE,
     error_penalty: dict[str, float] | None = None,
@@ -108,18 +93,14 @@ def maximize(
     multistart: bool | MultistartOptions | MultistartOptionsDict = False,
     collect_history: bool = True,
     skip_checks: bool = False,
-    # scipy aliases
     x0: PyTree | None = None,
     method: str | None = None,
     args: tuple[Any] | None = None,
-    # scipy arguments that are not yet supported
     hess: HessType | None = None,
     hessp: HessType | None = None,
     callback: CallbackType | None = None,
-    # scipy arguments that will never be supported
     options: dict[str, Any] | None = None,
     tol: NonNegativeFloat | None = None,
-    # deprecated arguments
     criterion: CriterionType | None = None,
     criterion_kwargs: dict[str, Any] | None = None,
     derivative: JacType | None = None,
@@ -255,18 +236,14 @@ def maximize(
         multistart=multistart,
         collect_history=collect_history,
         skip_checks=skip_checks,
-        # scipy aliases
         x0=x0,
         method=method,
         args=args,
-        # scipy arguments that are not yet supported
         hess=hess,
         hessp=hessp,
         callback=callback,
-        # scipy arguments that will never be supported
         options=options,
         tol=tol,
-        # deprecated arguments
         criterion=criterion,
         criterion_kwargs=criterion_kwargs,
         derivative=derivative,
@@ -297,7 +274,6 @@ def minimize(
     fun_and_jac: FunAndJacType | CriterionAndDerivativeType | None = None,
     fun_and_jac_kwargs: dict[str, Any] | None = None,
     numdiff_options: NumdiffOptions | NumdiffOptionsDict | None = None,
-    # TODO: add typed-dict support?
     logging: bool | str | Path | LogOptions | dict[str, Any] | None = None,
     error_handling: ErrorHandling | ErrorHandlingLiteral = ErrorHandling.RAISE,
     error_penalty: dict[str, float] | None = None,
@@ -305,18 +281,14 @@ def minimize(
     multistart: bool | MultistartOptions | MultistartOptionsDict = False,
     collect_history: bool = True,
     skip_checks: bool = False,
-    # scipy aliases
     x0: PyTree | None = None,
     method: str | None = None,
     args: tuple[Any] | None = None,
-    # scipy arguments that are not yet supported
     hess: HessType | None = None,
     hessp: HessType | None = None,
     callback: CallbackType | None = None,
-    # scipy arguments that will never be supported
     options: dict[str, Any] | None = None,
     tol: NonNegativeFloat | None = None,
-    # deprecated arguments
     criterion: CriterionType | None = None,
     criterion_kwargs: dict[str, Any] | None = None,
     derivative: JacType | None = None,
@@ -451,18 +423,14 @@ def minimize(
         multistart=multistart,
         collect_history=collect_history,
         skip_checks=skip_checks,
-        # scipy aliases
         x0=x0,
         method=method,
         args=args,
-        # scipy arguments that are not yet supported
         hess=hess,
         hessp=hessp,
         callback=callback,
-        # scipy arguments that will never be supported
         options=options,
         tol=tol,
-        # deprecated arguments
         criterion=criterion,
         criterion_kwargs=criterion_kwargs,
         derivative=derivative,
@@ -482,9 +450,6 @@ def minimize(
 
 def _optimize(problem: OptimizationProblem) -> OptimizeResult:
     """Solve an optimization problem."""
-    # ==================================================================================
-    # Split constraints into nonlinear and reparametrization parts
-    # ==================================================================================
     constraints = problem.constraints
 
     nonlinear_constraints = [
@@ -498,15 +463,10 @@ def _optimize(problem: OptimizationProblem) -> OptimizeResult:
                 "nonlinear constraints."
             )
 
-    # the following constraints will be handled via reparametrization
     constraints = [c for c in constraints if not isinstance(c, NonlinearConstraint)]
 
-    # ==================================================================================
-    # Do first evaluation of user provided functions
-    # ==================================================================================
     first_crit_eval = problem.fun_eval
 
-    # do first derivative evaluation (if given)
     if problem.jac is not None:
         try:
             first_deriv_eval = problem.jac(problem.params)
@@ -532,9 +492,6 @@ def _optimize(problem: OptimizationProblem) -> OptimizeResult:
     else:
         used_deriv = None
 
-    # ==================================================================================
-    # Get the converter (for tree flattening, constraints and scaling)
-    # ==================================================================================
     converter, internal_params = get_converter(
         params=problem.params,
         constraints=constraints,
@@ -546,9 +503,6 @@ def _optimize(problem: OptimizationProblem) -> OptimizeResult:
         add_soft_bounds=problem.multistart is not None,
     )
 
-    # ==================================================================================
-    # initialize the log database
-    # ==================================================================================
     logger: LogStore[Any, Any] | None
 
     if problem.logging:
@@ -558,29 +512,23 @@ def _optimize(problem: OptimizationProblem) -> OptimizeResult:
     else:
         logger = None
 
-    # ==================================================================================
-    # Strict checking if bounds are required and infinite values in bounds
-    # ==================================================================================
     if problem.algorithm.algo_info.supports_bounds:
         bounds_missing = (
             internal_params.lower_bounds is None or internal_params.upper_bounds is None
         )
 
-        # Check for infinite values in bounds arrays (only possible in mixed cases now)
         infinite_values_in_bounds = False
         if internal_params.lower_bounds is not None:
             infinite_values_in_bounds |= np.isinf(internal_params.lower_bounds).any()
         if internal_params.upper_bounds is not None:
             infinite_values_in_bounds |= np.isinf(internal_params.upper_bounds).any()
 
-        # Case 1: Algorithm needs bounds but none provided
         if problem.algorithm.algo_info.needs_bounds and bounds_missing:
             raise IncompleteBoundsError(
                 f"Algorithm {problem.algorithm.name} requires bounds for all "
                 "parameters. Please provide finite lower and upper bounds."
             )
 
-        # Case 2: Algorithm doesn't support infinite bounds but they are present
         if (
             not problem.algorithm.algo_info.supports_infinite_bounds
             and infinite_values_in_bounds
@@ -590,9 +538,6 @@ def _optimize(problem: OptimizationProblem) -> OptimizeResult:
                 "Please provide finite bounds for all parameters."
             )
 
-    # ==================================================================================
-    # Do some things that require internal parameters or bounds
-    # ==================================================================================
 
     if converter.has_transforming_constraints and problem.multistart is not None:
         raise NotImplementedError(
@@ -600,7 +545,6 @@ def _optimize(problem: OptimizationProblem) -> OptimizeResult:
             "constraints."
         )
 
-    # get error penalty function
     error_penalty_func = get_error_penalty_function(
         start_x=internal_params.values,
         start_criterion=first_crit_eval,
@@ -609,8 +553,6 @@ def _optimize(problem: OptimizationProblem) -> OptimizeResult:
         direction=problem.direction,
     )
 
-    # process nonlinear constraints; converting to dicts is a temporary seam during
-    # the constraints refactoring, as the processing is still dict-based
     internal_nonlinear_constraints = process_nonlinear_constraints(
         nonlinear_constraints=[c._to_dict() for c in nonlinear_constraints],
         params=problem.params,
@@ -626,16 +568,8 @@ def _optimize(problem: OptimizationProblem) -> OptimizeResult:
         upper=internal_params.upper_bounds,
     )
 
-    # ==================================================================================
-    # Create a batch evaluator
-    # ==================================================================================
-    # TODO: Make batch evaluator an argument of maximize and minimize and move this
-    # to create_optimization_problem
     batch_evaluator = process_batch_evaluator("joblib")
 
-    # ==================================================================================
-    # Create the InternalOptimizationProblem
-    # ==================================================================================
 
     internal_problem = InternalOptimizationProblem(
         fun=problem.fun,
@@ -649,19 +583,14 @@ def _optimize(problem: OptimizationProblem) -> OptimizeResult:
         error_handling=problem.error_handling,
         error_penalty_func=error_penalty_func,
         batch_evaluator=batch_evaluator,
-        # TODO: Actually pass through linear constraints if possible
         linear_constraints=None,
         nonlinear_constraints=internal_nonlinear_constraints,
         logger=logger,
     )
 
-    # ==================================================================================
-    # Do actual optimization
-    # ==================================================================================
     if problem.multistart is None:
         steps = [{"type": "optimization", "name": "optimization"}]
 
-        # TODO: Actually use the step ids
         step_id = log_scheduled_steps_and_get_ids(  # noqa: F841
             steps=steps,
             logger=logger,
@@ -691,9 +620,6 @@ def _optimize(problem: OptimizationProblem) -> OptimizeResult:
             error_handling=problem.error_handling,
         )
 
-    # ==================================================================================
-    # Process the result
-    # ==================================================================================
 
     _scalar_start_criterion = cast(
         float, first_crit_eval.internal_value(AggregationLevel.SCALAR)

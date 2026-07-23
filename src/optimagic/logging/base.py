@@ -15,21 +15,6 @@ OutputType = TypeVar("OutputType", bound=DictLikeAccess)
 
 
 class _KeyValueStore(Generic[InputType, OutputType], ABC):
-    """Generic abstract base class for a key-value store.
-
-    This class defines the basic interface for key-value stores that support
-    insertion and selection of items based on a primary key.
-
-    Args:
-        input_type: The type of input data that can be stored.
-        output_type: The type of output data that can be retrieved.
-        primary_key: The primary key used to uniquely identify items in the store.
-
-    Raises:
-        ValueError: If input_type or output_type is not a dataclass, or if
-                the primary key is not found in output_type fields.
-
-    """
 
     def __init__(
         self,
@@ -54,13 +39,7 @@ class _KeyValueStore(Generic[InputType, OutputType], ABC):
 
     @property
     def primary_key(self) -> str:
-        """Get the primary key of the store.
-
-        Returns:
-            The primary key field name.
-
-        """
-        return self._primary_key
+        pass
 
     @abstractmethod
     def insert(self, value: InputType) -> None:
@@ -118,12 +97,6 @@ class _KeyValueStore(Generic[InputType, OutputType], ABC):
 
 
 class UpdatableKeyValueStore(_KeyValueStore[InputType, OutputType], ABC):
-    """Generic abstract base class for an updatable key-value store.
-
-    This class extends `KeyValueStore` to add support for updating existing
-    items in the store.
-
-    """
 
     def update(self, key: int, value: InputType | dict[str, Any]) -> None:
         """Update an existing item in the store.
@@ -174,34 +147,7 @@ class RobustPickler:
         errors: str = "strict",  # noqa: ARG004
         buffers: Any = None,  # noqa: ARG004
     ) -> Any:
-        """Robust pickle loading.
-
-        We first try to unpickle the object with pd.read_pickle. This makes no
-        difference for non-pandas objects but makes the de-serialization
-        of pandas objects more robust across pandas versions. If that fails, we use
-        cloudpickle. If that fails, we return None but do not raise an error.
-
-        See: https://github.com/pandas-dev/pandas/issues/16474
-
-        """
-        try:
-            res = pd.read_pickle(io.BytesIO(data), compression=None)
-        except (KeyboardInterrupt, SystemExit):
-            raise
-        except Exception:
-            try:
-                res = cloudpickle.loads(data)
-            except (KeyboardInterrupt, SystemExit):
-                raise
-            except Exception:
-                res = None
-                tb = get_traceback()
-                warnings.warn(
-                    f"Unable to read PickleType column from database:\n{tb}\n "
-                    "The entry was replaced by None."
-                )
-
-        return res
+        pass
 
     @staticmethod
     def dumps(
@@ -211,4 +157,4 @@ class RobustPickler:
         fix_imports: bool = True,  # noqa: ARG001
         buffer_callback: Any = None,  # noqa: ARG004
     ) -> Any:
-        return cloudpickle.dumps(obj, protocol=protocol)
+        pass

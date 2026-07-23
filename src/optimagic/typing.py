@@ -25,7 +25,6 @@ T = TypeVar("T")
 
 
 class AggregationLevel(Enum):
-    """Enum to specify the aggregation level of objective functions and solvers."""
 
     SCALAR = "scalar"
     LEAST_SQUARES = "least_squares"
@@ -33,7 +32,6 @@ class AggregationLevel(Enum):
 
 
 class Direction(str, Enum):
-    """Enum to specify the direction of optimization."""
 
     MINIMIZE = "minimize"
     MAXIMIZE = "maximize"
@@ -41,10 +39,6 @@ class Direction(str, Enum):
 
 @dataclass(frozen=True)
 class DictLikeAccess:
-    r"""Useful base class for replacing string-based dictionaries with dataclass
-    instances and keeping backward compatability regarding read access to the data
-    structure.
-    """
 
     def __getitem__(self, key: str) -> Any:
         if key in self.__dict__:
@@ -70,9 +64,6 @@ class DictLikeAccess:
 
 @dataclass(frozen=True)
 class TupleLikeAccess:
-    r"""Useful base class for replacing tuples with dataclass instances and keeping
-    backward compatability regarding read access to the data structure.
-    """
 
     def __getitem__(self, index: int | slice) -> Any:
         field_values = [getattr(self, field.name) for field in fields(self)]
@@ -87,7 +78,6 @@ class TupleLikeAccess:
 
 
 class ErrorHandling(Enum):
-    """Enum to specify the error handling strategy of the optimization algorithm."""
 
     RAISE = "raise"
     RAISE_STRICT = "raise_strict"
@@ -95,7 +85,6 @@ class ErrorHandling(Enum):
 
 
 class EvalTask(Enum):
-    """Enum to specify the task of the evaluation function."""
 
     FUN = "fun"
     JAC = "jac"
@@ -145,14 +134,6 @@ ErrorHandlingLiteral = Literal["raise", "continue"]
 
 @dataclass(frozen=True)
 class IterationHistory(DictLikeAccess):
-    """History of iterations in a process.
-
-    Attributes:
-        params: A list of parameters used in each iteration.
-        criterion: A list of criterion values obtained in each iteration.
-        runtime: A list or array of runtimes associated with each iteration.
-
-    """
 
     params: list[PyTree]
     fun: list[float]
@@ -161,14 +142,6 @@ class IterationHistory(DictLikeAccess):
 
 @dataclass(frozen=True)
 class MultiStartIterationHistory(TupleLikeAccess):
-    """History of multiple start iterations.
-
-    Attributes:
-        history: The main iteration history, representing the best end value.
-        local_histories: Optional, a list of local iteration histories.
-        exploration: Optional, iteration history for exploration steps.
-
-    """
 
     history: IterationHistory
     local_histories: list[IterationHistory] | None = None

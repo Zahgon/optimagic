@@ -1,10 +1,3 @@
-"""Implement PySwarms particle swarm optimization algorithms.
-
-This module provides optimagic-compatible wrappers for PySwarms particle swarm
-optimization algorithms including global best, local best, and general PSO variants with
-support for different topologies.
-
-"""
 
 from __future__ import annotations
 
@@ -39,32 +32,20 @@ PYSWARMS_NOT_INSTALLED_ERROR = (
 )
 
 
-# ======================================================================================
-# 1. Topology Dataclasses
-# ======================================================================================
 
 
 @dataclass(frozen=True)
 class Topology:
-    """Base class for all topology configurations."""
+    pass
 
 
 @dataclass(frozen=True)
 class StarTopology(Topology):
-    """Star topology configuration.
-
-    All particles are connected to the global best.
-
-    """
+    pass
 
 
 @dataclass(frozen=True)
 class RingTopology(Topology):
-    """Ring topology configuration.
-
-    Particles are connected in a ring structure.
-
-    """
 
     k_neighbors: PositiveInt = 3
     """Number of neighbors for each particle."""
@@ -83,11 +64,6 @@ class RingTopology(Topology):
 
 @dataclass(frozen=True)
 class VonNeumannTopology(Topology):
-    """Von Neumann topology configuration.
-
-    Particles are arranged on a 2D grid.
-
-    """
 
     p_norm: Literal[1, 2] = 2
     """Distance metric for neighbor selection: 1 (Manhattan), 2 (Euclidean)."""
@@ -98,7 +74,6 @@ class VonNeumannTopology(Topology):
 
 @dataclass(frozen=True)
 class PyramidTopology(Topology):
-    """Pyramid topology configuration."""
 
     static: bool = False
     """Whether to use a static or dynamic pyramid topology.
@@ -111,11 +86,6 @@ class PyramidTopology(Topology):
 
 @dataclass(frozen=True)
 class RandomTopology(Topology):
-    """Random topology configuration.
-
-    Particles are connected to random neighbors.
-
-    """
 
     k_neighbors: PositiveInt = 3
     """Number of neighbors for each particle."""
@@ -129,14 +99,10 @@ class RandomTopology(Topology):
     """
 
 
-# ======================================================================================
-# Common PSO Options
-# ======================================================================================
 
 
 @dataclass(frozen=True)
 class PSOCommonOptions:
-    """Common options for PySwarms optimizers."""
 
     n_particles: PositiveInt = 10
     """Number of particles in the swarm."""
@@ -211,9 +177,6 @@ class PSOCommonOptions:
     """
 
 
-# ======================================================================================
-# Algorithm Classes
-# ======================================================================================
 
 
 @mark.minimizer(
@@ -233,43 +196,6 @@ class PSOCommonOptions:
 )
 @dataclass(frozen=True)
 class PySwarmsGlobalBestPSO(Algorithm, PSOCommonOptions):
-    r"""Minimize a scalar function using Global Best Particle Swarm Optimization.
-
-    A population-based stochastic, global optimization optimization algorithm that
-    simulates the social behavior of bird flocking or fish schooling. Particles
-    (candidate solutions) move through the search space, adjusting their positions
-    based on their own experience (cognitive component) and the experience of their
-    neighbors or the entire swarm (social component).
-
-    This implementation uses a star topology where all particles are connected to
-    each other, making each particle aware of the global best solution found by the
-    entire swarm.
-
-    The position update follows:
-
-    .. math::
-
-        x_{i}(t+1) = x_{i}(t) + v_{i}(t+1)
-
-    The velocity update follows:
-
-    .. math::
-
-        v_{ij}(t+1) = w \cdot v_{ij}(t) + c_1 r_{1j}(t)[y_{ij}(t) - x_{ij}(t)]
-                      + c_2 r_{2j}(t)[\hat{y}_j(t) - x_{ij}(t)]
-
-    Where:
-        - :math:`w`: inertia weight controlling momentum
-        - :math:`c_1`: cognitive parameter for attraction to personal best
-        - :math:`c_2`: social parameter for attraction to global best
-        - :math:`r_{1j}, r_{2j}`: random numbers in [0,1]
-        - :math:`y_{ij}(t)`: personal best position of particle i
-        - :math:`\hat{y}_j(t)`: global best position
-
-    This algorithm is an adaptation of the original Particle Swarm Optimization method
-    by :cite:`Kennedy1995`
-
-    """
 
     def _solve_internal_problem(
         self, problem: InternalOptimizationProblem, x0: NDArray[np.float64]
@@ -314,42 +240,6 @@ class PySwarmsGlobalBestPSO(Algorithm, PSOCommonOptions):
 )
 @dataclass(frozen=True)
 class PySwarmsLocalBestPSO(Algorithm, PSOCommonOptions):
-    r"""Minimize a scalar function using Local Best Particle Swarm Optimization.
-
-    A variant of PSO that uses local neighborhoods instead of a single global best.
-    Each particle is influenced only by the best position found within its local
-    neighborhood, which is determined by the k-nearest neighbors using distance metrics.
-
-    This approach uses a ring topology where particles are connected to their local
-    neighbors, making each particle aware of only the best solution found within its
-    neighborhood.
-
-    The position update follows:
-
-    .. math::
-
-        x_{i}(t+1) = x_{i}(t) + v_{i}(t+1)
-
-    The velocity update follows:
-
-    .. math::
-
-        v_{ij}(t+1) = w \cdot v_{ij}(t) + c_1 r_{1j}(t)[y_{ij}(t) - x_{ij}(t)]
-                      + c_2 r_{2j}(t)[\hat{y}_{lj}(t) - x_{ij}(t)]
-
-    Where:
-        - :math:`w`: inertia weight controlling momentum
-        - :math:`c_1`: cognitive parameter for attraction to personal best
-        - :math:`c_2`: social parameter for attraction to local best
-        - :math:`r_{1j}, r_{2j}`: random numbers in [0,1]
-        - :math:`y_{ij}(t)`: personal best position of particle i
-        - :math:`\hat{y}_{lj}(t)`: local best position in particle i's neighborhood
-
-    The algorithm is based on the original Particle Swarm Optimization method by
-    :cite:`Kennedy1995` and the local best concept introduced in
-    :cite:`EberhartKennedy1995`.
-
-    """
 
     topology: RingTopology = RingTopology()
     """Configuration for the Ring topology.
@@ -409,40 +299,6 @@ class PySwarmsLocalBestPSO(Algorithm, PSOCommonOptions):
 )
 @dataclass(frozen=True)
 class PySwarmsGeneralPSO(Algorithm, PSOCommonOptions):
-    r"""Minimize a scalar function using General Particle Swarm Optimization with custom
-    topologies.
-
-    A flexible PSO implementation that allows selection of different neighborhood
-    topologies, providing control over the balance between exploration and exploitation.
-    The topology determines how particles communicate and share information, directly
-    affecting the algorithm's search behavior.
-
-    The position update follows:
-
-    .. math::
-
-        x_{i}(t+1) = x_{i}(t) + v_{i}(t+1)
-
-    The velocity update follows:
-
-    .. math::
-
-        v_{ij}(t+1) = w \cdot v_{ij}(t) + c_1 r_{1j}(t)[y_{ij}(t) - x_{ij}(t)]
-                      + c_2 r_{2j}(t)[\hat{y}_{nj}(t) - x_{ij}(t)]
-
-    Where:
-        - :math:`w`: inertia weight controlling momentum
-        - :math:`c_1`: cognitive parameter for attraction to personal best
-        - :math:`c_2`: social parameter for attraction to neighborhood best
-        - :math:`r_{1j}, r_{2j}`: random numbers in [0,1]
-        - :math:`y_{ij}(t)`: personal best position of particle i
-        - :math:`\hat{y}_{nj}(t)`: neighborhood best position
-
-    This algorithm is based on the original Particle Swarm Optimization method by
-    :cite:`Kennedy1995` with configurable topology structures. For topology references,
-    see :cite:`Lane2008SpatialPSO, Ni2013`.
-
-    """
 
     topology: Literal["star", "ring", "vonneumann", "random", "pyramid"] | Topology = (
         "star"
@@ -670,7 +526,6 @@ def _create_initial_positions(
     else:
         lower_bounds, upper_bounds = bounds
 
-    # Generate random initial positions within the bounds, scaled by center
     init_pos = center * rng.uniform(
         low=lower_bounds, high=upper_bounds, size=(n_particles, n_dimensions)
     )
@@ -688,20 +543,7 @@ def _create_batch_objective(
     """Return an batch objective function."""
 
     def batch_objective(positions: NDArray[np.float64]) -> NDArray[np.float64]:
-        """Compute objective values for all particles in positions.
-
-        Args:
-            positions: 2D array of shape (n_particles, n_dimensions) with
-            particle positions.
-
-        Returns:
-            1D array of shape (n_particles,) with objective values.
-
-        """
-        arguments = [position for position in positions]
-        results = problem.batch_fun(arguments, n_cores=n_cores)
-
-        return np.array(results)
+        pass
 
     return batch_objective
 

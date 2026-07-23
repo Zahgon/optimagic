@@ -41,11 +41,6 @@ from optimagic.typing import (
 
 
 class LogOptions:
-    """Base class for defining different log options.
-
-    Serves as a registry for implemented option classes for better discoverability.
-
-    """
 
     _subclass_registry: list[Type[LogOptions]] = []
 
@@ -58,18 +53,13 @@ class LogOptions:
 
     @classmethod
     def available_option_types(cls) -> list[Type[LogOptions]]:
-        return cls._subclass_registry
+        pass
 
 
 _LogOptionsType = TypeVar("_LogOptionsType", bound=LogOptions)
 
 
 class LogReader(Generic[_LogOptionsType], ABC):
-    """A class that manages the retrieving of optimization and exploration data.
-
-    This class exposes methods to retrieve optimization logging data from stores.
-
-    """
 
     _step_store: UpdatableKeyValueStore[StepResult, StepResultWithId]
     _iteration_store: NonUpdatableKeyValueStore[IterationState, IterationStateWithId]
@@ -79,7 +69,7 @@ class LogReader(Generic[_LogOptionsType], ABC):
 
     @property
     def problem_df(self) -> pd.DataFrame:
-        return self._problem_store.to_df()
+        pass
 
     @classmethod
     def from_options(cls, log_options: LogOptions) -> LogReader[_LogOptionsType]:
@@ -100,64 +90,10 @@ class LogReader(Generic[_LogOptionsType], ABC):
         pass
 
     def read_iteration(self, iteration: int) -> IterationStateWithId:
-        """Read a specific iteration from the iteration store.
-
-        Args:
-            iteration: The iteration number to read. Negative values read from the end.
-
-        Returns:
-            A `CriterionEvaluationWithId` object containing the iteration data.
-
-        Raises:
-            IndexError: If the iteration is invalid or the store is empty.
-
-        """
-        if iteration >= 0:
-            rowid = iteration + 1
-        else:
-            try:
-                last_row = self._iteration_store.select_last_rows(1)
-                highest_rowid = last_row[0].rowid
-            except IndexError as e:
-                raise IndexError(
-                    "Invalid iteration request, iteration store is empty"
-                ) from e
-
-            # iteration is negative here!
-            assert highest_rowid is not None
-            rowid = highest_rowid + iteration + 1
-
-        row_list = self._iteration_store.select(rowid)
-
-        if len(row_list) == 0:
-            raise IndexError(f"Invalid iteration requested: {iteration}")
-        else:
-            data = row_list[0]
-
-        return data
+        pass
 
     def read_history(self) -> IterationHistory:
-        """Read the entire iteration history from the iteration store.
-
-        Returns:
-            An `IterationHistory` object containing the parameters,
-                criterion values, and runtimes.
-
-        """
-        raw_res = self._iteration_store.select()
-        params_list = []
-        criterion_list = []
-        runtime_list = []
-        for data in raw_res:
-            if data.scalar_fun is not None:
-                params_list.append(data.params)
-                criterion_list.append(data.scalar_fun)
-                runtime_list.append(data.timestamp)
-
-        times = np.array(runtime_list)
-        times -= times[0]
-
-        return IterationHistory(params_list, criterion_list, times)
+        pass
 
     @staticmethod
     def _normalize_direction(
@@ -187,9 +123,6 @@ class LogReader(Generic[_LogOptionsType], ABC):
 
         times = np.array(history["time"])
         times -= times[0]
-        # For numpy arrays with ndim = 0, tolist() returns a scalar, which violates the
-        # type hinting list[Any] from above. As history["time"] is always a list, this
-        # case is safe to ignore.
         history["time"] = times.tolist()
 
         df = pd.DataFrame(history)
@@ -305,17 +238,6 @@ _LogReaderType = TypeVar("_LogReaderType", bound=LogReader[Any])
 
 
 class LogStore(Generic[_LogOptionsType, _LogReaderType], ABC):
-    """A class that manages the logging of optimization and exploration data.
-
-    This class handles storing iterations, steps, and problem
-    initialization data using various stores.
-
-    Args:
-        iteration_store: A non-updatable store for iteration data.
-        step_store: An updatable store for step data.
-        problem_store: An updatable store for problem initialization data.
-
-    """
 
     def __init__(
         self,
@@ -355,25 +277,6 @@ class LogStore(Generic[_LogOptionsType, _LogReaderType], ABC):
 
 
 class SQLiteLogOptions(SQLAlchemyConfig, LogOptions):
-    """Configuration class for setting up an SQLite database with SQLAlchemy.
-
-    This class extends the `SQLAlchemyConfig` class to configure an SQLite database.
-    It handles the creation of the database engine, manages database files,
-    and applies various optimizations for logging performance.
-
-    Args:
-        path (str | Path): The file path to the SQLite database.
-        fast_logging (bool): A boolean that determines if “unsafe” settings are used to
-            speed up write processes to the database. This should only be used for very
-            short running criterion functions where the main purpose of the log
-            is a real-time dashboard, and it would not be catastrophic to get
-            a corrupted database in case of a sudden system shutdown.
-            If one evaluation of the criterion function (and gradient if applicable)
-            takes more than 100 ms, the logging overhead is negligible.
-        if_database_exists (ExistenceStrategy): Strategy for handling an existing
-            database file. One of “extend”, “replace”, “raise”.
-
-    """
 
     def __init__(
         self,
@@ -392,61 +295,16 @@ class SQLiteLogOptions(SQLAlchemyConfig, LogOptions):
 
     @property
     def path(self) -> str | Path:
-        return self._path
+        pass
 
     def create_engine(self) -> Engine:
-        engine = sql.create_engine(self.url)
-        self._configure_engine(engine)
-        return engine
+        pass
 
     def _configure_engine(self, engine: Engine) -> None:
-        """Configure the sqlite engine.
-
-        The two functions that configure the emission of the `begin` statement are taken
-        from the sqlalchemy documentation the documentation:
-        https://tinyurl.com/u9xea5z
-        and are
-        the recommended way of working around a bug in the pysqlite driver.
-
-        The other function speeds up the write process. If fast_logging is False, it
-        does so using only completely safe optimizations. Of fast_logging is True,
-        it also uses unsafe optimizations.
-
-        """
-
-        @sql.event.listens_for(engine, "connect")
-        def do_connect(dbapi_connection: Any, connection_record: Any) -> None:  # noqa: ARG001
-            # disable pysqlite's emitting of the BEGIN statement entirely.
-            # also stops it from emitting COMMIT before absolutely necessary.
-            dbapi_connection.isolation_level = None
-
-        @sql.event.listens_for(engine, "begin")
-        def do_begin(conn: Any) -> None:
-            # emit our own BEGIN
-            conn.exec_driver_sql("BEGIN DEFERRED")
-
-        @sql.event.listens_for(engine, "connect")
-        def set_sqlite_pragma(dbapi_connection: Any, connection_record: Any) -> None:  # noqa: ARG001
-            cursor = dbapi_connection.cursor()
-            cursor.execute("PRAGMA journal_mode = WAL")
-            if self._fast_logging:
-                cursor.execute("PRAGMA synchronous = OFF")
-            else:
-                cursor.execute("PRAGMA synchronous = NORMAL")
-            cursor.close()
+        pass
 
 
 class SQLiteLogReader(LogReader[SQLiteLogOptions]):
-    """A class that manages the retrieving of optimization and exploration data from a
-
-    SQLite database.
-
-    This class exposes methods to retrieve optimization logging data from stores.
-
-    Args:
-            path (str | Path): The path to the SQLite database file.
-
-    """
 
     def __init__(self, path: str | Path):
         if not os.path.exists(path):
@@ -475,14 +333,6 @@ class SQLiteLogReader(LogReader[SQLiteLogOptions]):
 
 
 class _SQLiteLogStore(LogStore[SQLiteLogOptions, SQLiteLogReader]):
-    """A logger class that stores and manages optimization and exploration data using
-
-    SQLite.
-
-    It supports different strategies for handling existing databases, such as extending,
-    replacing, or raising an error.
-
-    """
 
     @staticmethod
     def _handle_existing_database(

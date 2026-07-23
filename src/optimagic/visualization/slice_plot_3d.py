@@ -109,9 +109,6 @@ def slice_plot_3d(  # type: ignore[no-untyped-def]
 
     func_eval = func(params)
 
-    # ==================================================================================
-    # handle deprecated function output
-    # ==================================================================================
     if deprecations.is_dict_output(func_eval):
         msg = (
             "Functions that return dictionaries are deprecated in slice_plot and will "
@@ -123,9 +120,6 @@ def slice_plot_3d(  # type: ignore[no-untyped-def]
         func_eval = deprecations.convert_dict_to_function_value(func_eval)
         func = deprecations.replace_dict_output(func)
 
-    # ==================================================================================
-    # Infer the function type and enforce the return type
-    # ==================================================================================
 
     if deprecations.is_dict_output(func_eval):
         problem_type = deprecations.infer_problem_type_from_dict_output(func_eval)
@@ -136,7 +130,6 @@ def slice_plot_3d(  # type: ignore[no-untyped-def]
 
     func = enforce_return_type(problem_type)(func)
 
-    # ==================================================================================
 
     converter, internal_params = get_converter(
         params=params,
@@ -161,7 +154,6 @@ def slice_plot_3d(  # type: ignore[no-untyped-def]
     if not np.isfinite(internal_params.upper_bounds[selected]).all():
         raise ValueError("All selected parameters must have finite upper bounds.")
 
-    # Projection configuration
     projection = Projection(projection)
     if not projection.is_univariate and n_params < 2:
         raise ValueError(
@@ -179,7 +171,6 @@ def slice_plot_3d(  # type: ignore[no-untyped-def]
         )
         display_names[name] = param_names.get(name, name) if param_names else name
 
-    # This is where
     evaluation_points = generate_evaluation_points(
         projection, selected, internal_params, params_data, converter
     )
@@ -193,7 +184,6 @@ def slice_plot_3d(  # type: ignore[no-untyped-def]
         n_cores=n_cores,
     )
 
-    # add NaNs where an evaluation failed
     func_values = np.array(
         [
             np.nan
@@ -207,7 +197,6 @@ def slice_plot_3d(  # type: ignore[no-untyped-def]
         projection, selected, internal_params, func_values, n_gridpoints
     )
 
-    # Kwargs evaluation
     plot_kwargs = evaluate_plot_kwargs(plot_kwargs)
     make_subplot_kwargs = evaluate_make_subplot_kwargs(
         make_subplot_kwargs, n_params, projection, display_names
@@ -242,7 +231,6 @@ def slice_plot_3d(  # type: ignore[no-untyped-def]
             )
             grid_univariate = False
 
-            # Scatter plot point
             scatter_point = {
                 "x": [internal_params.values[param_pos]],
                 "y": [func_eval.internal_value(AggregationLevel.SCALAR)],
@@ -273,7 +261,6 @@ def slice_plot_3d(  # type: ignore[no-untyped-def]
                     x_pos = x_selected
                     y_pos = y_selected
 
-                # Diagonal plot are slice plots
                 if i == j and not single_plot:
                     grid_univariate = True
                     param_name = internal_params.names[x_pos]
@@ -292,7 +279,6 @@ def slice_plot_3d(  # type: ignore[no-untyped-def]
                     )
                     y_range = compute_yaxis_range(y, expand_yrange)
 
-                    # Scatter plot point
                     scatter_point = {
                         "x": [internal_params.values[x_pos]],
                         "y": [func_eval.internal_value(AggregationLevel.SCALAR)],
@@ -327,7 +313,6 @@ def slice_plot_3d(  # type: ignore[no-untyped-def]
                         z = plot_data.get(tuple(sorted(current_param_names)), [])
                         z = np.reshape(z, (n_gridpoints, n_gridpoints))
 
-                        # Scatter plot point
                         scatter_point = {
                             "x": [internal_params.values[x_pos]],
                             "y": [internal_params.values[y_pos]],
@@ -610,7 +595,6 @@ def plot_contour(  # type: ignore[no-untyped-def]
 
 
 class ProjectionConfig(str, Enum):
-    """An Enum to validate and represent supported projection types."""
 
     UNIVARIATE = "univariate"
     CONTOUR = "contour"
@@ -618,36 +602,22 @@ class ProjectionConfig(str, Enum):
 
     @classmethod
     def validate(cls, value):  # type: ignore[no-untyped-def]
-        if value is None:
-            return None
-        if isinstance(value, str):
-            value = value.lower()
-            if value in cls._value2member_map_:
-                return cls(value)
-            raise ValueError(f"Invalid projection: '{value}'")
-        raise TypeError(f"Expected str or None, got {type(value)}")
+        pass
 
     @property
     def is_univariate(self) -> bool:
-        return self == ProjectionConfig.UNIVARIATE
+        pass
 
     @property
     def is_surface(self) -> bool:
-        return self == ProjectionConfig.SURFACE
+        pass
 
     @property
     def is_contour(self) -> bool:
-        return self == ProjectionConfig.CONTOUR
+        pass
 
 
 class Projection:
-    """A helper class to parse the `projection` argument.
-
-    This class handles parsing the `projection` argument, which can be a simple
-    string (e.g., "univariate") or a dictionary (e.g., `{"lower": "contour",
-    "upper": "surface"}`) for creating mixed-grid plots.
-
-    """
 
     def __init__(self, value):  # type: ignore[no-untyped-def]
         self._univariate = False
@@ -657,31 +627,15 @@ class Projection:
         self._parse(value)
 
     def _parse(self, value):  # type: ignore[no-untyped-def]
-        if isinstance(value, str):
-            value = value.lower()
-            if value == ProjectionConfig.UNIVARIATE:
-                self._univariate = True
-            elif value in (ProjectionConfig.SURFACE, ProjectionConfig.CONTOUR):
-                self.lower = ProjectionConfig.validate(value)
-                self.upper = None
-            else:
-                raise ValueError(f"Invalid projection: '{value}'")
-        elif isinstance(value, dict):
-            self.lower = ProjectionConfig.validate(value.get("lower"))
-            self.upper = ProjectionConfig.validate(value.get("upper"))
-        else:
-            raise TypeError(
-                f"Invalid type for projection: {type(value)}. "
-                "Must be a string or dict with 'lower' and 'upper' keys."
-            )
+        pass
 
     @property
     def is_univariate(self) -> bool:
-        return self._univariate
+        pass
 
     @property
     def is_dict(self) -> bool:
-        return not self._univariate
+        pass
 
     def get_config(self):  # type: ignore[no-untyped-def]
         if self._univariate:
@@ -690,7 +644,6 @@ class Projection:
 
 
 def compute_yaxis_range(y: list[float], expand_yrange: float) -> list[float]:
-    # Calculate expanded y-axis limits based on data range
     y_min, y_max = np.min(y), np.max(y)
     y_range = y_max - y_min
     return [y_min - expand_yrange * y_range, y_max + expand_yrange * y_range]
@@ -722,23 +675,15 @@ def combine_plots(  # type: ignore[no-untyped-def]
     """
     plots = deepcopy(plots)
 
-    # --- NEW, SIMPLIFIED LOGIC FOR SINGLE PLOTS ---
-    # If the plot grid is just 1x1, do not rebuild the figure.
-    # Return the already correctly-scaled plot directly.
     if make_subplot_kwargs.get("rows") == 1 and make_subplot_kwargs.get("cols") == 1:
-        # Extract the single figure from the plots dictionary.
         (row, col), fig = plots.popitem()
 
-        # Apply final layout customizations like width and height.
         fig.update_layout(**layout_kwargs)
 
-        # Get the correct titles for the x and y axes.
-        # Note: A bug in title assignment is also fixed here.
         all_titles = make_subplot_kwargs.get("column_titles", ["", ""])
         x_title = all_titles[0]
         y_title = all_titles[1]
 
-        # Assign titles correctly depending on whether it's a 3D or 2D plot.
         if hasattr(fig.layout, "scene") and fig.layout.scene:
             scene_key = next(key for key in fig.layout if key.startswith("scene"))
             fig.layout[scene_key].xaxis.title = x_title
@@ -749,9 +694,7 @@ def combine_plots(  # type: ignore[no-untyped-def]
             fig.update_yaxes(title_text=y_title)
 
         return fig
-    # --- END OF NEW LOGIC ---
 
-    # --- Original logic for creating a grid of subplots (for len(plots) > 1) ---
     fig = make_subplots(**make_subplot_kwargs)
     fig.update_layout(**layout_kwargs)
 
@@ -811,7 +754,6 @@ def combine_plots(  # type: ignore[no-untyped-def]
 def _get_subplot_spec(  # type: ignore[no-untyped-def]
     i: int, j: int, projection, n_selected: int
 ) -> dict[str | None, str | None]:
-    # Determine subplot spec type (xy, scene, contour) for a given subplot position.
     if i == j and n_selected != 2:
         return {"type": "xy"}
 
@@ -833,7 +775,6 @@ def _get_subplot_spec(  # type: ignore[no-untyped-def]
 
 
 def evaluate_plot_kwargs(plot_kwargs):  # type: ignore[no-untyped-def]
-    # Set default styling for plots if not provided by the user.
     if plot_kwargs is None:
         plot_kwargs = {}
 
@@ -854,7 +795,6 @@ def evaluate_plot_kwargs(plot_kwargs):  # type: ignore[no-untyped-def]
         "contour_plot": {
             "colorscale": "Aggrnyl",
             "showscale": True,
-            # "line_smoothing": 0.85,
         },
     }
 
@@ -868,7 +808,6 @@ def evaluate_make_subplot_kwargs(  # type: ignore[no-untyped-def]
     projection,
     titles: dict[str, str],
 ):
-    # Set default parameters for make_subplots() if not provided by user.
     if make_subplot_kwargs is None:
         make_subplot_kwargs = {}
 
@@ -915,15 +854,12 @@ def evaluate_make_subplot_kwargs(  # type: ignore[no-untyped-def]
     return make_subplot_defaults
 
 
-# mypy: disable-error-code="dict-item"
 def evaluate_layout_kwargs(  # type: ignore[no-untyped-def]
     layout_kwargs,
     projection,
     subplot_config,
 ):
-    # Set default parameters for update_layout() if not provided by user.
 
-    # Default camera view
     default_scene_camera_view = dict(x=2, y=2, z=0.5)
 
     if layout_kwargs is None:

@@ -1,4 +1,3 @@
-"""Implement cyipopt's Interior Point Optimizer."""
 
 from dataclasses import dataclass
 from typing import Any, Literal
@@ -48,18 +47,15 @@ from optimagic.typing import (
 )
 @dataclass(frozen=True)
 class Ipopt(Algorithm):
-    # convergence criteria
     convergence_ftol_rel: NonNegativeFloat = CONVERGENCE_FTOL_REL
     dual_inf_tol: PositiveFloat = 1.0
     constr_viol_tol: PositiveFloat = 0.0001
     compl_inf_tol: PositiveFloat = 0.0001
     s_max: float = 100
     mu_target: NonNegativeFloat = 0.0
-    # stopping criteria
     stopping_maxiter: PositiveInt = STOPPING_MAXITER
     stopping_max_wall_time_seconds: PositiveFloat = 1e20
     stopping_max_cpu_time: PositiveFloat = 1e20
-    # acceptable criteria
     acceptable_iter: NonNegativeInt = 15
     acceptable_tol: PositiveFloat = 1e-6
     acceptable_dual_inf_tol: PositiveFloat = 1e-10
@@ -77,17 +73,13 @@ class Ipopt(Algorithm):
     ] = "make_parameter"
     dependency_detector: Literal["none", "mumps", "wsmp", "ma28"] | None = None
     dependency_detection_with_rhs: YesNoBool = False
-    # bounds
     kappa_d: NonNegativeFloat = 1e-5
     bound_relax_factor: NonNegativeFloat = 1e-8
     honor_original_bounds: YesNoBool = False
-    # derivatives
     check_derivatives_for_naninf: YesNoBool = False
-    # not sure if we should support the following:
     jac_c_constant: YesNoBool = False
     jac_d_constant: YesNoBool = False
     hessian_constant: YesNoBool = False
-    # scaling
     nlp_scaling_method: (
         Literal[
             "none",
@@ -102,12 +94,9 @@ class Ipopt(Algorithm):
     nlp_scaling_obj_target_gradient: NonNegativeFloat = 0.0
     nlp_scaling_constr_target_gradient: NonNegativeFloat = 0.0
     nlp_scaling_min_value: NonNegativeFloat = 1e-8
-    # initialization
     bound_push: PositiveFloat = 0.01
-    # TODO: refine type to fix the range (0,0.5]
     bound_frac: PositiveFloat = 0.01
     slack_bound_push: PositiveFloat = 0.01
-    # TODO: refine type to fix the range (0,0.5]
     slack_bound_frac: PositiveFloat = 0.01
     constr_mult_init_max: NonNegativeFloat = 1000
     bound_mult_init_val: PositiveFloat = 1
@@ -117,24 +106,20 @@ class Ipopt(Algorithm):
     ] = "constant"
     least_square_init_primal: YesNoBool = False
     least_square_init_duals: YesNoBool = False
-    # warm start
     warm_start_init_point: YesNoBool = False
     warm_start_same_structure: YesNoBool = False
     warm_start_bound_push: PositiveFloat = 0.001
     warm_start_bound_frac: PositiveFloat = 0.001
     warm_start_slack_bound_push: PositiveFloat = 0.001
-    # TODO: refine type to fix the range (0,0.5])
     warm_start_slack_bound_frac: PositiveFloat = 0.001
     warm_start_mult_bound_push: PositiveFloat = 0.001
     warm_start_mult_init_max: float = 1e6
     warm_start_entire_iterate: YesNoBool = False
     warm_start_target_mu: float = 0.0
-    # miscellaneous
     option_file_name: str = ""
     replace_bounds: YesNoBool = False
     skip_finalize_solution_call: YesNoBool = False
     timing_statistics: YesNoBool = False
-    # barrier parameter update
     mu_max_fact: PositiveFloat = 1000
     mu_max: PositiveFloat = 100_000
     mu_min: PositiveFloat = 1e-11
@@ -144,9 +129,7 @@ class Ipopt(Algorithm):
         "never-monotone-mode",
     ] = "obj-constr-filter"
     adaptive_mu_kkterror_red_iters: NonNegativeInt = 4
-    # TODO: refine type to fix the range (0,1)
     adaptive_mu_kkterror_red_fact: PositiveFloat = 0.9999
-    # TODO: refine type to fix the range (0,1)
     filter_margin_fact: PositiveFloat = 1e-5
     filter_max_margin: PositiveFloat = 1
     adaptive_mu_restore_previous_iterate: YesNoBool = False
@@ -171,12 +154,9 @@ class Ipopt(Algorithm):
     ] = "average_compl"
     mu_init: PositiveFloat = 0.1
     barrier_tol_factor: PositiveFloat = 10
-    # TODO: refine type to fix the range (0,1)
     mu_linear_decrease_factor: PositiveFloat = 0.2
-    # TODO: refine type to fix the range (1,2)
     mu_superlinear_decrease_power: GtOneFloat = 1.5
     mu_allow_fast_monotone_decrease: YesNoBool = True
-    # TODO: refine type to fix the range (0,1)
     tau_min: PositiveFloat = 0.99
     sigma_max: PositiveFloat = 100
     sigma_min: NonNegativeFloat = 1e-6
@@ -197,17 +177,13 @@ class Ipopt(Algorithm):
     ) = None
     quality_function_balancing_term: Literal["none", "cubic"] | None = None
     quality_function_max_section_steps: NonNegativeInt = 8
-    # TODO: refine type to fix the range [0,1)
     quality_function_section_sigma_tol: NonNegativeFloat = 0.01
-    # TODO: refine type to fix the range [0,1)
     quality_function_section_qf_tol: NonNegativeFloat = 0.0
-    # line search
     line_search_method: Literal[
         "filter",
         "penalty",
         "cg-penalty",
     ] = "filter"
-    # TODO: refine type to fix the range (0,1)
     alpha_red_factor: PositiveFloat = 0.5
     accept_every_trial_step: YesNoBool = False
     accept_after_max_steps: Literal[-1] | NonNegativeInt = -1
@@ -230,16 +206,12 @@ class Ipopt(Algorithm):
     watchdog_trial_iter_max: PositiveInt = 3
     theta_max_fact: PositiveFloat = 10_000
     theta_min_fact: PositiveFloat = 0.0001
-    # TODO: refine type to fix the range (0,0.5)
     eta_phi: PositiveFloat = 1e-8
     delta: PositiveFloat = 1
     s_phi: GtOneFloat = 2.3
     s_theta: GtOneFloat = 1.1
-    # TODO: refine type to fix the range (0,1)
     gamma_phi: PositiveFloat = 1e-8
-    # TODO: refine type to fix the range (0,1)
     gamma_theta: PositiveFloat = 1e-5
-    # TODO: refine type to fix the range (0,1)
     alpha_min_frac: PositiveFloat = 0.05
     max_soc: NonNegativeInt = 4
     kappa_soc: PositiveFloat = 0.99
@@ -260,7 +232,6 @@ class Ipopt(Algorithm):
     soc_method: Literal[0, 1] = 0
     nu_init: PositiveFloat = 1e-6
     nu_inc: PositiveFloat = 0.0001
-    # TODO: refine type to fix the range (0,1)
     rho: PositiveFloat = 0.1
     kappa_sigma: PositiveFloat = 1e10
     recalc_y: YesNoBool = False
@@ -271,7 +242,6 @@ class Ipopt(Algorithm):
         "2-norm",
         "max-norm",
     ] = "1-norm"
-    # step calculation
     mehrotra_algorithm: YesNoBool = False
     fast_step_computation: YesNoBool = False
     min_refinement_steps: NonNegativeInt = 1
@@ -285,20 +255,17 @@ class Ipopt(Algorithm):
     min_hessian_perturbation: NonNegativeFloat = 1e-20
     perturb_inc_fact_first: GtOneFloat = 100
     perturb_inc_fact: GtOneFloat = 8
-    # TODO: refine type to fix the range (0,1)
     perturb_dec_fact: PositiveFloat = 0.333333
     first_hessian_perturbation: PositiveFloat = 0.0001
     jacobian_regularization_value: NonNegativeFloat = 1e-8
     jacobian_regularization_exponent: NonNegativeFloat = 0.25
     perturb_always_cd: YesNoBool = False
-    # restoration phase
     expect_infeasible_problem: YesNoBool = False
     expect_infeasible_problem_ctol: NonNegativeFloat = 0.001
     expect_infeasible_problem_ytol: PositiveFloat = 1e8
     start_with_resto: YesNoBool = False
     soft_resto_pderror_reduction_factor: NonNegativeFloat = 0.9999
     max_soft_resto_iters: NonNegativeInt = 10
-    # TODO: refine type to fix the range [0,1)
     required_infeasibility_reduction: NonNegativeFloat = 0.9
     max_resto_iter: NonNegativeInt = 3_000_000
     evaluate_orig_obj_at_resto_trial: YesNoBool = True
@@ -307,7 +274,6 @@ class Ipopt(Algorithm):
     bound_mult_reset_threshold: NonNegativeFloat = 1000
     constr_mult_reset_threshold: NonNegativeFloat = 0
     resto_failure_feasibility_threshold: NonNegativeFloat | None = None
-    # hessian approximation
     limited_memory_aug_solver: Literal[
         "sherman-morrison",
         "extended",
@@ -337,7 +303,6 @@ class Ipopt(Algorithm):
         "nonlinear-variables",
         "all-variables",
     ] = "nonlinear-variables"
-    # linear solver
     linear_solver: Literal[
         "mumps", "ma27", "ma57", "ma77", "ma86", "ma97", "pardiso", "custom"
     ] = "mumps"
@@ -377,7 +342,6 @@ class Ipopt(Algorithm):
                 self.resto_failure_feasibility_threshold
             )
 
-        # convert None to str none section
         linear_solver_options_with_none = [
             "ma86_scaling",
             "ma97_scaling",
@@ -453,13 +417,11 @@ class Ipopt(Algorithm):
         }
 
         options = {
-            # disable verbosity
             "print_level": 0,
             "ma77_print_level": -1,
             "ma86_print_level": -1,
             "ma97_print_level": -1,
             "pardiso_msglvl": 0,
-            # disable derivative checker
             "derivative_test": "none",
             "s_max": float(self.s_max),
             "max_iter": self.stopping_maxiter,
@@ -468,14 +430,12 @@ class Ipopt(Algorithm):
             "dual_inf_tol": self.dual_inf_tol,
             "constr_viol_tol": self.constr_viol_tol,
             "compl_inf_tol": self.compl_inf_tol,
-            # acceptable heuristic
             "acceptable_iter": self.acceptable_iter,
             "acceptable_tol": self.acceptable_tol,
             "acceptable_dual_inf_tol": self.acceptable_dual_inf_tol,
             "acceptable_constr_viol_tol": self.acceptable_constr_viol_tol,
             "acceptable_compl_inf_tol": self.acceptable_compl_inf_tol,
             "acceptable_obj_change_tol": self.acceptable_obj_change_tol,
-            # bounds and more
             "diverging_iterates_tol": self.diverging_iterates_tol,
             "nlp_lower_bound_inf": self.nlp_lower_bound_inf,
             "nlp_upper_bound_inf": self.nlp_upper_bound_inf,
@@ -484,7 +444,6 @@ class Ipopt(Algorithm):
             "kappa_d": self.kappa_d,
             "bound_relax_factor": self.bound_relax_factor,
             "honor_original_bounds": self.honor_original_bounds,
-            # scaling
             "nlp_scaling_method": _convert_none_to_str(self.nlp_scaling_method),
             "obj_scaling_factor": float(self.obj_scaling_factor),
             "nlp_scaling_max_gradient": float(self.nlp_scaling_max_gradient),
@@ -495,7 +454,6 @@ class Ipopt(Algorithm):
                 self.nlp_scaling_constr_target_gradient
             ),
             "nlp_scaling_min_value": float(self.nlp_scaling_min_value),
-            # initialization
             "bound_push": self.bound_push,
             "bound_frac": self.bound_frac,
             "slack_bound_push": self.slack_bound_push,
@@ -503,7 +461,6 @@ class Ipopt(Algorithm):
             "constr_mult_init_max": float(self.constr_mult_init_max),
             "bound_mult_init_val": float(self.bound_mult_init_val),
             "bound_mult_init_method": self.bound_mult_init_method,
-            # warm start
             "warm_start_bound_push": self.warm_start_bound_push,
             "warm_start_bound_frac": self.warm_start_bound_frac,
             "warm_start_slack_bound_push": self.warm_start_slack_bound_push,
@@ -511,9 +468,7 @@ class Ipopt(Algorithm):
             "warm_start_mult_bound_push": self.warm_start_mult_bound_push,
             "warm_start_mult_init_max": self.warm_start_mult_init_max,
             "warm_start_target_mu": self.warm_start_target_mu,
-            # more miscellaneous
             "option_file_name": self.option_file_name,
-            # barrier parameter update
             "mu_target": float(self.mu_target),
             "mu_max_fact": float(self.mu_max_fact),
             "mu_max": float(self.mu_max),
@@ -549,7 +504,6 @@ class Ipopt(Algorithm):
                 self.quality_function_section_sigma_tol
             ),
             "quality_function_section_qf_tol": self.quality_function_section_qf_tol,
-            # linear search
             "line_search_method": self.line_search_method,
             "alpha_red_factor": self.alpha_red_factor,
             "accept_after_max_steps": self.accept_after_max_steps,
@@ -583,7 +537,6 @@ class Ipopt(Algorithm):
             "recalc_y_feas_tol": self.recalc_y_feas_tol,
             "slack_move": self.slack_move,
             "constraint_violation_norm_type": self.constraint_violation_norm_type,
-            # step calculation
             "min_refinement_steps": self.min_refinement_steps,
             "max_refinement_steps": self.max_refinement_steps,
             "residual_ratio_max": self.residual_ratio_max,
@@ -600,7 +553,6 @@ class Ipopt(Algorithm):
             "jacobian_regularization_exponent": float(
                 self.jacobian_regularization_exponent
             ),
-            # restoration phase
             "expect_infeasible_problem_ctol": self.expect_infeasible_problem_ctol,
             "expect_infeasible_problem_ytol": self.expect_infeasible_problem_ytol,
             "soft_resto_pderror_reduction_factor": (
@@ -618,7 +570,6 @@ class Ipopt(Algorithm):
             "resto_failure_feasibility_threshold": float(
                 resto_failure_feasibility_threshold
             ),
-            # hessian approximation
             "limited_memory_aug_solver": self.limited_memory_aug_solver,
             "limited_memory_max_history": self.limited_memory_max_history,
             "limited_memory_update_type": self.limited_memory_update_type,
@@ -629,7 +580,6 @@ class Ipopt(Algorithm):
             "limited_memory_max_skipping": self.limited_memory_max_skipping,
             "hessian_approximation": self.hessian_approximation,
             "hessian_approximation_space": self.hessian_approximation_space,
-            # linear solver
             "linear_solver": self.linear_solver,
             **linear_solver_options,
             **converted_bool_to_str_options,

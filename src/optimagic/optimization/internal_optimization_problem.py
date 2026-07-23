@@ -61,7 +61,6 @@ class InternalOptimizationProblem:
         linear_constraints: list[dict[str, Any]] | None,
         nonlinear_constraints: list[dict[str, Any]] | None,
         logger: LogStore[Any, Any] | None,
-        # TODO: add hess and hessp
     ):
         self._fun = fun
         self._jac = jac
@@ -80,9 +79,6 @@ class InternalOptimizationProblem:
         self._logger = logger
         self._step_id: int | None = None
 
-    # ==================================================================================
-    # Public methods used by optimizers
-    # ==================================================================================
 
     def fun(self, x: NDArray[np.float64]) -> float | NDArray[np.float64]:
         """Evaluate the objective function at x.
@@ -152,7 +148,6 @@ class InternalOptimizationProblem:
             func=self._evaluate_fun,
             arguments=x_list,
             n_cores=n_cores,
-            # This should always be raise because errors are already handled
             error_handling="raise",
         )
         fun_values = [result[0] for result in batch_result]
@@ -167,33 +162,7 @@ class InternalOptimizationProblem:
         n_cores: int,
         batch_size: int | None = None,
     ) -> list[NDArray[np.float64]]:
-        """Parallelized batch version of .jac.
-
-        Args:
-            x_list: A list of parameter vectors at which to evaluate the first
-                derivative.
-            n_cores: The number of cores to use for the parallel evaluation.
-            batch_size: Batch size that can be used by some algorithms to simulate
-                the behavior under parallelization on more cores than are actually
-                available. Only used by `criterion_plots` and benchmark plots.
-
-        Returns:
-            A list of first derivatives at the points in x_list. See .jac for details.
-
-        """
-        batch_size = n_cores if batch_size is None else batch_size
-
-        batch_result = self._batch_evaluator(
-            func=self._evaluate_jac,
-            arguments=x_list,
-            n_cores=n_cores,
-            # This should always be raise because errors are already handled
-            error_handling="raise",
-        )
-        jac_values = [result[0] for result in batch_result]
-        hist_entries = [result[1] for result in batch_result]
-        self._history.add_batch(hist_entries, batch_size)
-        return jac_values
+        pass
 
     def batch_fun_and_jac(
         self,
@@ -201,34 +170,7 @@ class InternalOptimizationProblem:
         n_cores: int,
         batch_size: int | None = None,
     ) -> list[tuple[float | NDArray[np.float64], NDArray[np.float64]]]:
-        """Parallelized batch version of .fun_and_jac.
-
-        Args:
-            x_list: A list of parameter vectors at which to evaluate the objective
-                function and its first derivative.
-            n_cores: The number of cores to use for the parallel evaluation.
-            batch_size: Batch size that can be used by some algorithms to simulate
-                the behavior under parallelization on more cores than are actually
-                available. Only used by `criterion_plots` and benchmark plots.
-
-        Returns:
-            A list of tuples containing the function value and the first derivative
-                at the points in x_list. See .fun_and_jac for details.
-
-        """
-        batch_size = n_cores if batch_size is None else batch_size
-        batch_result = self._batch_evaluator(
-            func=self._evaluate_fun_and_jac,
-            arguments=x_list,
-            n_cores=n_cores,
-            # This should always be raise because errors are already handled
-            error_handling="raise",
-        )
-        fun_and_jac_values = [result[0] for result in batch_result]
-        hist_entries = [result[1] for result in batch_result]
-        self._history.add_batch(hist_entries, batch_size)
-
-        return fun_and_jac_values
+        pass
 
     def exploration_fun(
         self,
@@ -241,7 +183,6 @@ class InternalOptimizationProblem:
             func=self._evaluate_exploration_fun,
             arguments=x_list,
             n_cores=n_cores,
-            # This should always be raise because errors are already handled
             error_handling="raise",
         )
         fun_values = [result[0] for result in batch_result]
@@ -265,115 +206,35 @@ class InternalOptimizationProblem:
         new._step_id = step_id
         return new
 
-    # ==================================================================================
-    # Public attributes
-    # ==================================================================================
 
     @property
     def bounds(self) -> InternalBounds:
-        """Bounds of the optimization problem."""
-        return self._bounds
+        pass
 
     @property
     def converter(self) -> Converter:
-        """Converter between external and internal parameter representation.
-
-        The converter transforms parameters between their user-provided
-        representation (the external representation) and the flat numpy array used
-        by the optimizer (the internal representation).
-
-        This transformation includes:
-        - Flattening and unflattening of pytree structures.
-        - Applying parameter constraints via reparametrizations.
-        - Scaling and unscaling of parameter values.
-
-        The Converter object provides the following main attributes:
-
-        - ``params_to_internal``: Callable that converts a pytree of external
-          parameters to a flat numpy array of internal parameters.
-        - ``params_from_internal``: Callable that converts a flat numpy array of
-          internal parameters to a pytree of external parameters.
-        - ``derivative_to_internal``: Callable that converts the derivative
-          from the external parameter space to the internal space.
-        - ``has_transforming_constraints``: Boolean that is True if the conversion
-          involves constraints that are handled by reparametrization.
-
-        Examples:
-            The converter is particularly useful for algorithms that require initial
-            values in the internal (flat) parameter space, while allowing the user
-            to specify these values in the more convenient external (pytree) format.
-
-            Here's how an optimization algorithm might use the converter internally
-            to prepare parameters for the optimizer:
-
-                >>> from optimagic.optimization.internal_optimization_problem import (
-                ...     SphereExampleInternalOptimizationProblem
-                ... )
-                >>> import numpy as np
-                >>>
-                >>> # Optimization problem instance.
-                >>> problem = SphereExampleInternalOptimizationProblem()
-                >>>
-                >>> # User provided parameters in external format.
-                >>> user_params = np.array([1.0, 2.0, 3.0])
-                >>>
-                >>> # Convert to internal format for optimization algorithms.
-                >>> internal_params = problem.converter.params_to_internal(user_params)
-                >>> internal_params
-                array([1., 2., 3.])
-
-        """
-        return self._converter
+        pass
 
     @property
     def linear_constraints(self) -> list[dict[str, Any]] | None:
-        # TODO: write a docstring as soon as we actually use this
-        return self._linear_constraints
+        pass
 
     @property
     def nonlinear_constraints(self) -> list[dict[str, Any]] | None:
-        """Internal representation of nonlinear constraints.
-
-        Compared to the user provided constraints, we have done the following
-        transformations:
-
-        1. The constraint a <= g(x) <= b is transformed to h(x) >= 0, where h(x) is
-        - h(x) = g(x), if a == 0 and b == inf
-        - h(x) = g(x) - a, if a != 0 and b == inf
-        - h(x) = (g(x) - a, -g(x) + b) >= 0, if a != 0 and b != inf.
-
-        2. The equality constraint g(x) = v is transformed to h(x) >= 0, where
-        h(x) = (g(x) - v, -g(x) + v).
-
-        3. Vector constraints are transformed to a list of scalar constraints.
-        g(x) = (g1(x), g2(x), ...) >= 0 is transformed to (g1(x) >= 0, g2(x) >= 0, ...).
-
-        4. The constraint function (defined on a selection of user-facing parameters) is
-        transformed to be evaluated on the internal parameters.
-
-        """
-        return self._nonlinear_constraints
+        pass
 
     @property
     def direction(self) -> Direction:
-        """Direction of the optimization problem."""
-        return self._direction
+        pass
 
     @property
     def history(self) -> History:
-        """History container for the optimization problem."""
-        return self._history
+        pass
 
     @property
     def logger(self) -> LogStore[Any, Any] | None:
-        """Logger for the optimization problem."""
-        return self._logger
+        pass
 
-    # ==================================================================================
-    # Implementation of the public functions; The main difference is that the lower-
-    # level implementations return a history entry instead of adding it to the history
-    # directly so they can be called in parallel!
-    # ==================================================================================
 
     def _evaluate_fun(
         self, x: NDArray[np.float64]
@@ -410,12 +271,7 @@ class InternalOptimizationProblem:
     def _evaluate_exploration_fun(
         self, x: NDArray[np.float64]
     ) -> tuple[float, HistoryEntry]:
-        fun_value, hist_entry, log_entry = self._pure_exploration_fun(x)
-
-        if self._logger:
-            self._logger.iteration_store.insert(log_entry)
-
-        return fun_value, hist_entry
+        pass
 
     def _evaluate_fun_and_jac(
         self, x: NDArray[np.float64]
@@ -439,9 +295,6 @@ class InternalOptimizationProblem:
 
         return (fun_value, jac_value), hist_entry
 
-    # ==================================================================================
-    # Atomic evaluations of user provided functions or numerical derivatives
-    # ==================================================================================
 
     def _pure_evaluate_fun(
         self, x: NDArray[np.float64]
@@ -657,60 +510,7 @@ class InternalOptimizationProblem:
     def _pure_exploration_fun(
         self, x: NDArray[np.float64]
     ) -> tuple[float, HistoryEntry, IterationState]:
-        start_time = time.perf_counter()
-        params = self._converter.params_from_internal(x)
-        traceback: None | str = None
-
-        try:
-            fun_value = self._fun(params)
-        except (KeyboardInterrupt, SystemExit):
-            raise
-        except Exception:
-            traceback = get_traceback()
-
-            msg = (
-                "The following exception was caught when evaluating fun during the "
-                "exploration phase of a multistart optimization. The fun value was "
-                "replaced by a penalty value to continue with the "
-                f"optimization.:\n\n{traceback}"
-            )
-            warnings.warn(msg)
-            fun_value, _ = self._error_penalty_func(x)
-
-        if not traceback:
-            algo_fun_value, hist_fun_value = _process_fun_value(
-                value=fun_value,
-                # For exploration we always need a scalar value
-                solver_type=AggregationLevel.SCALAR,
-                direction=self._direction,
-            )
-        else:
-            algo_fun_value = -np.inf
-            hist_fun_value = -np.inf
-            if self._direction == Direction.MAXIMIZE:
-                hist_fun_value = np.inf
-
-        stop_time = time.perf_counter()
-
-        hist_entry = HistoryEntry(
-            params=params,
-            fun=hist_fun_value,
-            start_time=start_time,
-            stop_time=stop_time,
-            task=EvalTask.EXPLORATION,
-        )
-
-        log_entry = IterationState(
-            params=params,
-            timestamp=start_time,
-            scalar_fun=hist_fun_value,
-            valid=not bool(traceback),
-            raw_fun=fun_value,
-            step=self._step_id,
-            exceptions=traceback,
-        )
-
-        return cast(float, algo_fun_value), hist_entry, log_entry
+        pass
 
     def _pure_evaluate_fun_and_jac(
         self, x: NDArray[np.float64]
@@ -880,14 +680,6 @@ def _process_jac_value(
 
 
 class SphereExampleInternalOptimizationProblem(InternalOptimizationProblem):
-    """Super simple example of an internal optimization problem.
-
-    This can be used to test algorithm wrappers or to familiarize yourself with the
-    internal optimization problem interface.
-
-    Args:
-
-    """
 
     def __init__(
         self,
@@ -964,28 +756,6 @@ class SphereExampleInternalOptimizationProblem(InternalOptimizationProblem):
 class SphereExampleInternalOptimizationProblemWithConverter(
     InternalOptimizationProblem
 ):
-    """Super simple example of an internal optimization problem with PyTree Converter.
-
-    Note: params should be a dict with key-value pairs `"x{i}" : val .
-    eg. `{'x0': 1, 'x1': 2, ...}`.
-
-    The converter.params_to_internal method converts tree like
-    `{'x0': 1, 'x1': 2, 'x2': 3 ...}` to flat array `[1,2,3 ...]` .
-
-    The converter.params_from_internal method converts flat array `[1,2,3 ...]`
-    to tree like `{'x0': 1, 'x1': 2, 'x2': 3 ...}`.
-
-    The converter.derivative_to_internal converts derivative trees
-    {'x0': 2,'x1': 4, } to flat arrays [2,4] and jacobian tree
-    `{  "x0": {"x0": 1, "x1": 0, },
-        "x1": {"x0": 0, "x1": 1, }`
-    to NDArray [[1, 0,], [0, 1, ],]. }.
-    This can be used to test algorithm wrappers or to familiarize yourself
-    with the internal optimization problem interface.
-
-    Args:
-
-    """
 
     def __init__(
         self,
@@ -997,12 +767,10 @@ class SphereExampleInternalOptimizationProblemWithConverter(
             return ScalarFunctionValue(out)
 
         def ls_sphere(params: PyTree) -> SpecificFunctionValue:
-            out = [params[f"x{i}"] for i in range(len(params))]
-            return LeastSquaresFunctionValue(out)
+            pass
 
         def likelihood_sphere(params: PyTree) -> SpecificFunctionValue:
-            out = [params[f"x{i}"] ** 2 for i in range(len(params))]
-            return LikelihoodFunctionValue(out)
+            pass
 
         _fun_dict = {
             AggregationLevel.SCALAR: sphere,
@@ -1014,13 +782,10 @@ class SphereExampleInternalOptimizationProblemWithConverter(
             return {f"x{i}": 2 * v for i, v in enumerate(params.values())}
 
         def likelihood_sphere_gradient(params: PyTree) -> PyTree:
-            return {f"x{i}": 2 * v for i, v in enumerate(params.values())}
+            pass
 
         def ls_sphere_jac(params: PyTree) -> PyTree:
-            return {
-                f"x{i}": {f"x{j}": 1 if i == j else 0 for j in range(len(params))}
-                for i in range(len(params))
-            }
+            pass
 
         _jac_dict = {
             AggregationLevel.SCALAR: sphere_gradient,

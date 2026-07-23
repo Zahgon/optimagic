@@ -14,7 +14,6 @@ from optimagic.utilities import isscalar
 
 @dataclass(frozen=True)
 class ExtraResultFields:
-    """Fields for OptimizeResult that are not part of InternalOptimizeResult."""
 
     start_fun: float
     start_params: PyTree
@@ -104,10 +103,6 @@ def process_multistart_result(
             extra_fields=extra_fields,
         )
 
-        # ==============================================================================
-        # create a convergence report for the multistart optimization; This is not
-        # the same as the convergence report for the individual local optimizations.
-        # ==============================================================================
         report_history = History(
             direction=extra_fields.direction,
             fun=[opt.fun for opt in info.local_optima],
@@ -137,8 +132,6 @@ def _process_multistart_info(
     solver_type: AggregationLevel,
     extra_fields: ExtraResultFields,
 ) -> MultistartInfo:
-    # The `info` dictionary is obtained from the `multistart_info` field of the
-    # InternalOptimizeResult returned by `run_multistart_optimization` function.
 
     starts = [converter.params_from_internal(x) for x in info["start_parameters"]]
 

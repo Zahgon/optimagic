@@ -1,4 +1,3 @@
-"""Implement the MIGRAD algorithm from iminuit."""
 
 from __future__ import annotations
 
@@ -42,32 +41,6 @@ if TYPE_CHECKING:
 )
 @dataclass(frozen=True)
 class IminuitMigrad(Algorithm):
-    r"""Minimize a scalar differentiable function using the MIGRAD algorithm from
-    iminuit.
-
-    This optimizer wraps the MIGRAD algorithm from the iminuit package, which provides a
-    Python interface to the Minuit2 C++ library developed and maintained by CERN.
-
-    MIGRAD is a local optimization method in the quasi-Newton family. It iteratively
-    builds an approximation of the inverse Hessian matrix using the DFP variable-metric
-    method to efficiently navigate optimization landscapes.
-
-    At each iteration, the algorithm attempts a Newton step, using gradient and Hessian
-    approximations to move toward the function’s minimum. If this step fails to reduce
-    the objective function, MIGRAD conducts a line search along the gradient direction
-    to maintain progress. This continues until the convergence criteria, such as the
-    Estimated Distance to Minimum (EDM) are met, that is, they fall below preset
-    thresholds.
-
-    MIGRAD is designed for statistical optimization problems where accurate parameter
-    uncertainty estimates are essential. It excels at maximum-likelihood and least-
-    squares fits common in scientific computing, and is best suited for smooth,
-    differentiable cost functions.
-
-    For best performance, supply analytical gradients. Convergence and solution will
-    depend on your starting values. Bound constraints (limits) supported.
-
-    """
 
     stopping_maxfun: int = STOPPING_MAXFUN
     """Maximum number of function evaluations."""
@@ -94,7 +67,7 @@ class IminuitMigrad(Algorithm):
         from iminuit import Minuit
 
         def wrapped_objective(x: NDArray[np.float64]) -> float:
-            return float(problem.fun(x))
+            pass
 
         m = Minuit(wrapped_objective, params, grad=problem.jac)
 

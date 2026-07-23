@@ -12,20 +12,7 @@ VectorFuncT = TypeVar("VectorFuncT", bound=Callable[..., Any])
 
 
 def scalar(func: ScalarFuncT) -> ScalarFuncT:
-    """Mark a function as a scalar function."""
-    wrapper = func
-    try:
-        wrapper._problem_type = AggregationLevel.SCALAR  # type: ignore
-    except (KeyboardInterrupt, SystemExit):
-        raise
-    except Exception:
-
-        @wraps(func)
-        def wrapper(*args, **kwargs):  # type: ignore
-            return func(*args, **kwargs)
-
-        wrapper._problem_type = AggregationLevel.SCALAR  # type: ignore
-    return wrapper
+    pass
 
 
 def least_squares(func: VectorFuncT) -> VectorFuncT:
@@ -39,7 +26,7 @@ def least_squares(func: VectorFuncT) -> VectorFuncT:
 
         @wraps(func)
         def wrapper(*args, **kwargs):  # type: ignore
-            return func(*args, **kwargs)
+            pass
 
         wrapper._problem_type = AggregationLevel.LEAST_SQUARES  # type: ignore
     return wrapper
@@ -56,13 +43,12 @@ def likelihood(func: VectorFuncT) -> VectorFuncT:
 
         @wraps(func)
         def wrapper(*args, **kwargs):  # type: ignore
-            return func(*args, **kwargs)
+            pass
 
         wrapper._problem_type = AggregationLevel.LIKELIHOOD  # type: ignore
     return wrapper
 
 
-# TODO: I get an error when adding bound=Algorithm to AlgorithmSubclass. Why?
 AlgorithmSubclass = TypeVar("AlgorithmSubclass")
 
 
@@ -121,23 +107,6 @@ def minimizer(
     """
 
     def decorator(cls: AlgorithmSubclass) -> AlgorithmSubclass:
-        algo_info = AlgoInfo(
-            name=name,
-            solver_type=solver_type,
-            is_available=is_available,
-            is_global=is_global,
-            needs_jac=needs_jac,
-            needs_hess=needs_hess,
-            needs_bounds=needs_bounds,
-            supports_parallelism=supports_parallelism,
-            supports_bounds=supports_bounds,
-            supports_infinite_bounds=supports_infinite_bounds,
-            supports_linear_constraints=supports_linear_constraints,
-            supports_nonlinear_constraints=supports_nonlinear_constraints,
-            disable_history=disable_history,
-            experimental=experimental,
-        )
-        cls.__algo_info__ = algo_info  # type: ignore
-        return cls
+        pass
 
     return decorator

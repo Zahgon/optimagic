@@ -1,27 +1,8 @@
-"""History class for pounders and similar optimizers."""
 
 import numpy as np
 
 
 class LeastSquaresHistory:
-    """Container to save and retrieve history entries for a least-square optimizer.
-
-    These entries are:
-    - xs
-    - residuals
-    - critvals
-
-    The class automatically determines the 'best' entries, i.e. entries related to
-    the x that yield the smallest critval - given all xs stored so far.
-
-    Xs and residuals can be both saved and accessed in their centered
-    and uncentered form. 'Centered' meaning that they are scaled by their
-    corresponding 'best' entry. 'Uncentered' simply being the raw entries.
-
-    Critvals don't need to be added explicitly, as they are computed internally
-    as the sum of squares of the residuals whenever new entries are added.
-
-    """
 
     def __init__(self):
         self.xs = None
@@ -65,23 +46,7 @@ class LeastSquaresHistory:
         self.n_fun += len(xs)
 
     def add_centered_entries(self, xs, residuals, center_info):
-        """Add new parameter vectors and residuals to the history.
-
-        Args:
-            xs (np.ndarray or list): 1d or 2d array or list of 1d arrays with
-                parameter vectors.
-            residuals (np.ndarray or list): 1d or 2d array or list of 1d arrays with
-                least square residuals.
-            center_info (dict): Dictionary with the entries "x", "residuals" and
-                "radius". The information is used to uncenter parameters and residuals
-                before adding them to the history.
-
-        """
-        xs = np.atleast_2d(xs)
-        residuals = np.atleast_2d(residuals)
-        xs_uncentered = xs * center_info["radius"] + center_info["x"]
-        residuals_uncentered = residuals + center_info["residuals"]
-        self.add_entries(xs_uncentered, residuals_uncentered)
+        pass
 
     def get_entries(self, index=None):
         """Retrieve xs, residuals and critvals from the history.
@@ -100,7 +65,6 @@ class LeastSquaresHistory:
 
         out = (getattr(self, name)[: self.n_fun] for name in names)
 
-        # Reducing arrays to length n_fun ensures that invalid indices raise IndexError
         if index is not None:
             out = [arr[index] for arr in out]
 
@@ -214,23 +178,7 @@ class LeastSquaresHistory:
         return residuals
 
     def get_centered_critvals(self, center_info, index=None):
-        """Retrieve centered critvals from the history.
-
-        Args:
-            center_info (dict): Dictionary with the entry"residuals".
-                The information is used to center critvals.
-            index (None, int or np.ndarray): Specifies the subset of rows that will
-                be returned.
-
-        Returns:
-            np.ndarray: Float or 1d array with centered criterion values.
-
-        """
-        residuals_unc = self.get_residuals(index=index)
-        residuals = residuals_unc - center_info["residuals"]
-        critvals = (residuals**2).sum(axis=-1)
-
-        return critvals
+        pass
 
     def get_n_fun(self):
         return self.n_fun
@@ -239,7 +187,7 @@ class LeastSquaresHistory:
         return self.best_index
 
     def get_best_entries(self):
-        return self.get_entries(index=self.best_index)
+        pass
 
     def get_best_x(self):
         return self.get_xs(index=self.best_index)
@@ -248,10 +196,10 @@ class LeastSquaresHistory:
         return self.get_residuals(index=self.best_index)
 
     def get_best_critval(self):
-        return self.get_critvals(index=self.best_index)
+        pass
 
     def get_best_centered_entries(self, center_info):
-        return self.get_centered_entries(self, center_info, index=self.best_index)
+        pass
 
 
 def _add_entries_to_array(arr, new, position):

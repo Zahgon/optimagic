@@ -1,4 +1,3 @@
-"""Functions to convert between array and block-tree representations of a matrix."""
 
 import numpy as np
 import pandas as pd
@@ -267,26 +266,16 @@ def _convert_raw_block_to_pandas(raw_block, leaf_outer, leaf_inner):
     index1 = None if not _is_pd_object(leaf_outer) else leaf_outer.index
     index2 = None if not _is_pd_object(leaf_inner) else leaf_inner.index
 
-    # can only happen if one leaf is a scalar and the other a pandas
-    # object that is interpreted as one-dimensional. We want to convert
-    # the block to a series wtih the index of the pandas object
     if np.ndim(raw_block) == 1:
         out = pd.Series(raw_block, index=_select_non_none(index1, index2))
 
-    # can happen in two cases
     elif np.ndim(raw_block) == 2:
-        # case 1: one leaf is scalar and the other is a DataFrame
-        # without value column. We want to convert the block to a DataFrame
-        # with same index and columns as original DataFrame
         if np.isscalar(leaf_outer) or np.isscalar(leaf_inner):
             if np.isscalar(leaf_outer):
                 index, columns = leaf_inner.index, leaf_inner.columns
             elif np.isscalar(leaf_inner):
                 index, columns = leaf_outer.index, leaf_outer.columns
             out = pd.DataFrame(raw_block, index=index, columns=columns)
-        # case 2: both 1d Data structures and at least one of them is
-        # a pandas object. We want to convert the result to a DataFrame
-        # with index=index1 and columns=index2
         else:
             out = pd.DataFrame(raw_block, index=index1, columns=index2)
 
@@ -347,15 +336,12 @@ def _check_dimensions_hessian(hessian, f_tree, params_tree):
     flat_p = tree_leaves(params_tree, registry=extended_registry)
 
     if len(flat_f) == 1:
-        # consider only dimensions with non trivial size (larger than 1)
         relevant_hessian_shape = tuple(k for k in hessian.shape if k != 1)
 
         if len(relevant_hessian_shape) == 0 and len(flat_p) != 1:
-            # scalar f and scalar params -> scalar hessian
             raise ValueError("Hessian dimension does not match those of params.")
 
         if len(relevant_hessian_shape) == 2:
-            # scalar f and vector params -> matrix hessian
             if relevant_hessian_shape != (len(flat_p), len(flat_p)):
                 raise ValueError("Hessian dimension does not match those of params.")
 

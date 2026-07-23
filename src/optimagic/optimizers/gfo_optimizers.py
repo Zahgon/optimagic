@@ -38,7 +38,6 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True)
 class GFOCommonOptions:
-    """Common options for all optimizers from GFO."""
 
     n_grid_points: PositiveInt | PyTree = 201
     """Number of grid points per dimension.
@@ -114,9 +113,6 @@ class GFOCommonOptions:
     iteration step."""
 
 
-# ==================================================================================
-# Local optimizers
-# ==================================================================================
 
 
 @mark.minimizer(
@@ -136,20 +132,6 @@ class GFOCommonOptions:
 )
 @dataclass(frozen=True)
 class GFOHillClimbing(GFOCommonOptions, Algorithm):
-    """Minimize a scalar function using the HillClimbing algorithm.
-
-    This algorithm is a Python implementation of the HillClimbing algorithm through the
-    gradient_free_optimizers package.
-
-    Hill climbing is a local search algorithm suited for exploring combinatorial search
-    spaces.
-
-    “It starts at an initial point, which is the best point chosen from `n_init`
-    initialization runs, and continues to move to positions within its
-    neighbourhood with a better solution. It has no method against getting stuck in
-    local optima.
-
-    """
 
     epsilon: PositiveFloat = 0.03
     """The step-size of the hill climbing algorithm. If step_size is too large the newly
@@ -217,16 +199,6 @@ class GFOHillClimbing(GFOCommonOptions, Algorithm):
 )
 @dataclass(frozen=True)
 class GFOStochasticHillClimbing(Algorithm, GFOCommonOptions):
-    """Minimize a scalar function using the Stochastic Hill Climbing algorithm.
-
-    This algorithm is a Python implementation of the StochasticHillClimbing algorithm
-    through the gradient_free_optimizers package.
-
-    Stochastic hill climbing extends the normal hill climbing by accepting worse
-    positions with a probability `p_accept` as a next position helping against getting
-    stuck in local optima.
-
-    """
 
     epsilon: PositiveFloat = 0.03
     """The step-size of the hill climbing algorithm. If step_size is too large the newly
@@ -312,15 +284,6 @@ class GFOStochasticHillClimbing(Algorithm, GFOCommonOptions):
 )
 @dataclass(frozen=True)
 class GFORepulsingHillClimbing(Algorithm, GFOCommonOptions):
-    """Minimize a scalar function using the Repulsing Hill Climbing algorithm.
-
-    This algorithm is a Python implementation of the Repulsing Hill Climbing algorithm
-    through the gradient_free_optimizers package.
-
-    The algorithm inherits from the Hill climbing which is a local search algorithm but
-    always activates its methods to escape local optima.
-
-    """
 
     epsilon: PositiveFloat = 0.03
     """The step-size of the hill climbing algorithm. If step_size is too large the newly
@@ -392,16 +355,6 @@ class GFORepulsingHillClimbing(Algorithm, GFOCommonOptions):
 )
 @dataclass(frozen=True)
 class GFOSimulatedAnnealing(Algorithm, GFOCommonOptions):
-    """Minimize a scalar function using the Simulated Annealing algorithm.
-
-    This algorithm is a Python implementation of Simulated Annealing through the
-    gradient_free_optimizers package.
-
-    Simulated annealing chooses its next possible position similar to hill climbing, but
-    it accepts worse results with a probability that decreases with time. It simulates a
-    temperature that decreases with each iteration, similar to a material cooling down.
-
-    """
 
     epsilon: PositiveFloat = 0.03
     """The step-size of the algorithm.
@@ -480,19 +433,6 @@ class GFOSimulatedAnnealing(Algorithm, GFOCommonOptions):
 )
 @dataclass(frozen=True)
 class GFODownhillSimplex(Algorithm, GFOCommonOptions):
-    """Minimize a scalar function using the Downhill Simplex algorithm.
-
-    This algorithm is a Python implementation of the Downhill Simplex algorithm through
-    the gradient_free_optimizers package.
-
-    The Downhill simplex or Nelder mead algorithm works by grouping `number of
-    dimensions + 1` positions into a simplex, which can explore the search-space by
-    changing shape. The simplex changes shape by reflecting, expanding, contracting or
-    shrinking via the alpha, gamma, beta or sigma parameters. It needs at least `number
-    of dimensions + 1` initial positions to form a simplex in the search-space and the
-    movement of the positions in the simplex are affected by each other.
-
-    """
 
     simplex_reflection: PositiveFloat = 1
     """The reflection parameter of the simplex algorithm."""
@@ -545,20 +485,6 @@ class GFODownhillSimplex(Algorithm, GFOCommonOptions):
 )
 @dataclass(frozen=True)
 class GFOPowellsMethod(Algorithm, GFOCommonOptions):
-    """Minimize a scalar function using Powell's Method.
-
-    This algorithm is a Python implementation of the Powell's Method algorithm through
-    the gradient_free_optimizers package.
-
-    This powell's method implementation works by optimizing each search space dimension
-    at a time with the hill climbing algorithm. It works by setting the search space
-    range for all dimensions except one to a single value. The hill climbing algorithms
-    searches the best position within this dimension. After `iters_p_dim` iterations the
-    next dimension is searched, while the search space range from the
-    previously searched dimension is set to the best position,
-    This way the algorithm finds new best positions one dimension at a time.
-
-    """
 
     iters_p_dim: PositiveInt = 10
     """Number of iterations the algorithm will let the hill-climbing algorithm search to
@@ -588,9 +514,6 @@ class GFOPowellsMethod(Algorithm, GFOCommonOptions):
         return res
 
 
-# ==================================================================================
-# Population Based
-# ==================================================================================
 
 
 @mark.minimizer(
@@ -610,29 +533,6 @@ class GFOPowellsMethod(Algorithm, GFOCommonOptions):
 )
 @dataclass(frozen=True)
 class GFOParticleSwarmOptimization(Algorithm, GFOCommonOptions):
-    r"""Minimize a scalar function using the Particle Swarm Optimization algorithm.
-
-    This algorithm is a Python implementation of the Particle Swarm Optimization
-    algorithm through the gradient_free_optimizers package.
-
-    Particle Swarm Optimization is a global population based algorithm.
-
-    The algorithm simulates a swarm of particles which move according to their own
-    inertia across the search space.
-    Each particle adjusts its position based on its own experience (cognitive weight)
-    and the experiences of its neighbors or the swarm (social weight), using
-    velocity updates.
-    The algorithm iteratively guides the swarm toward promising regions of the
-    search space.
-
-    The velocity of a particle is calculated by the following
-    equation:
-
-    .. math::
-        v_{n+1} = \\omega \\cdot v_n + c_k \\cdot r_1 \\cdot (p_{best}-p_n)
-        + c_s \\cdot r_2 \\cdot (g_{best} - p_n)
-
-    """
 
     population_size: PositiveInt | None = None
     """Size of the population."""
@@ -694,27 +594,6 @@ class GFOParticleSwarmOptimization(Algorithm, GFOCommonOptions):
 )
 @dataclass(frozen=True)
 class GFOParallelTempering(Algorithm, GFOCommonOptions):
-    r"""Minimize a scalar function using the Parallel Tempering algorithm.
-
-    This algorithm is a Python implementation of the Parallel Tempering
-    algorithm through the gradient_free_optimizers package.
-
-    Parallel Tempering is a global optimization algorithm that is inspired by
-    metallurgical annealing.
-    It runs multiple optimizer instances at different
-    "starting temperatures" in parallel. Periodically, swaps between these runs are
-    attempted. Swaps between optimization runs at different temperatures allow the
-    optimizer to overcome local optima.
-
-    The probability of swapping temperatures for any combination of optimizer instances
-    is given by.
-
-    .. math::
-
-        p = \\min \\left( 1, \\exp\\left[{(\\text{score}_i-
-        \\text{score}_j)\\left(\\frac{1}{T_i}-\\frac{1}{T_j}\\right)}\\right] \\right)
-
-    """
 
     population_size: PositiveInt | None = None
     """Size of the population."""
@@ -767,38 +646,6 @@ class GFOParallelTempering(Algorithm, GFOCommonOptions):
 )
 @dataclass(frozen=True)
 class GFOSpiralOptimization(Algorithm, GFOCommonOptions):
-    r"""Minimize a scalar function using the Spiral Optimization algorithm.
-
-    This algorithm is a Python implementation of the Spiral Optimization
-    algorithm through the gradient_free_optimizers package.
-
-    Spiral Optimization is a population-based algorithm, in which a number of particles
-    move in a spiral-like pattern to explore the search space and converge to the
-    best known position as the spiral decays.
-
-    The position of each particle is updated according to the following equation:
-
-    .. math::
-
-        x_i (k+1) = x^* (k) + r(k) \\cdot R(\\theta) \\cdot (x_i(k)- x^*(k))
-
-    where:
-        - `k` = k-th iteration
-        - `x_i(k)` = current position.
-        - `x*(k)` = center position (known best position of all particles)
-        - `r(k)` = decay rate ,
-        - `R` = rotation matrix.
-
-    and rotation matrix R is given by
-
-    .. math::
-
-        R(\\theta) = \\begin{bmatrix}
-            0^{\\top}_{n-1} & -1 \\\\
-            I_{n-1} & 0_{n-1}
-        \\end{bmatrix}
-
-    """
 
     population_size: PositiveInt | None = None
     """Size of the population."""
@@ -856,17 +703,6 @@ class GFOSpiralOptimization(Algorithm, GFOCommonOptions):
 )
 @dataclass(frozen=True)
 class GFOGeneticAlgorithm(Algorithm, GFOCommonOptions):
-    """Minimize a scalar function using the Genetic Algorithm.
-
-    This algorithm is a Python implementation of the Genetic Algorithm through the
-    gradient_free_optimizers package.
-
-    The Genetic Algorithm is an evolutionary algorithm inspired by the process of
-    natural selection. It evolves a population of candidate solutions over generations
-    using mechanisms like selection, crossover, and mutation of genes(bits) to find the
-    best solution.
-
-    """
 
     population_size: PositiveInt | None = None
     """Size of the population."""
@@ -969,36 +805,6 @@ class GFOGeneticAlgorithm(Algorithm, GFOCommonOptions):
 )
 @dataclass(frozen=True)
 class GFOEvolutionStrategy(Algorithm, GFOCommonOptions):
-    r"""Minimize a scalar function using the Evolution Strategy algorithm.
-
-    This algorithm is a Python implementation of the Evolution Strategy algorithm
-    through the gradient_free_optimizers package.
-
-    Evolution Strategy is a evolutionary algorithm inspired by natural evolution and
-    work by iteratively improving a population of candidate solutions through mutation,
-    crossover, and selection.
-    A population of parents generates offspring, and only the fittest individuals
-    from both parents and offspring are selected to form the next generation.
-
-    The algorithm uses both mutation and crossover to create new candidate solutions.
-    The choice between mutation and crossover is determined probabilistically based on
-    their respective rates in the following way.
-
-    .. math::
-
-        \\text{total_rate} = \\text{mutation_rate} + \\text{crossover_rate}
-    .. math::
-
-        R = \\text{random_float} (0 ... \\text{total_rate})
-
-    .. code-block::
-
-        if R <= mutation-rate:
-            do mutation
-        else:
-            do crossover
-
-    """
 
     population_size: PositiveInt | None = None
     """Size of the population."""
@@ -1058,29 +864,6 @@ class GFOEvolutionStrategy(Algorithm, GFOCommonOptions):
 )
 @dataclass(frozen=True)
 class GFODifferentialEvolution(Algorithm, GFOCommonOptions):
-    r"""Minimize a scalar function using the Differential Evolution algorithm.
-
-    This algorithm is a Python implementation of the Differential Evolution
-    algorithm through the gradient_free_optimizers package.
-
-    Differential Evolution is a population-based optimization algorithm that
-    creates iteratively improves a population of candidate solutions by combining and
-    perturbing them based on their differences.
-    It creates new
-    positions in the search space by adding the weighted difference between two
-    individuals in the population  to a third individual creating trial solutions that
-    are evaluated for their fitness and if a trial solution is better than the target
-    it replaces, ensures continual improvement.
-
-    A new trial solution is generated according to:
-
-    .. math::
-        x_{trial} = x_{r1} + F \\cdot (x_{r2} - x_{r3})
-
-    where :math:`r1, r2, r3` are random individuals from the population, and
-    :math:`F` is the differential weight or mutation_rate.
-
-    """
 
     population_size: PositiveInt | None = None
     """Size of the population."""
@@ -1146,9 +929,6 @@ class GFODifferentialEvolution(Algorithm, GFOCommonOptions):
         return res
 
 
-# ==================================================================================
-# Helper functions
-# ==================================================================================
 
 
 def _gfo_internal(
@@ -1163,17 +943,14 @@ def _gfo_internal(
     optimization.
 
     """
-    # Use common options from GFOCommonOptions
     common = common_options
 
-    # set early stopping criterion
     early_stopping = {
         "n_iter_no_change": common.convergence_iter_noimprove,
         "tol_abs": common.convergence_ftol_abs,
         "tol_rel": common.convergence_ftol_rel,
     }
 
-    # define search space, initial params, initial_population and constraints
     opt = optimizer(
         search_space=_get_search_space_gfo(
             problem.bounds,
@@ -1187,19 +964,15 @@ def _gfo_internal(
         random_state=common.seed,
     )
 
-    # define objective function, negate to perform minimize
     def objective_function(para: dict[str, float]) -> float | NDArray[np.float64]:
-        x = np.array(opt.conv.para2value(para))
-        return -problem.fun(x)
+        pass
 
-    # negate in case of minimize
     convergence_target_value = (
         -1 * common.convergence_target_value
         if common.convergence_target_value is not None
         else None
     )
 
-    # run optimization
     opt.search(
         objective_function=objective_function,
         n_iter=common.stopping_maxiter,

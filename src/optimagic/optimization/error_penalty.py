@@ -101,14 +101,7 @@ def get_error_penalty_function(
     def penalty(
         x: NDArray[np.float64],
     ) -> tuple[SpecificFunctionValue, NDArray[np.float64]]:
-        out = _penalty(
-            x=x,
-            constant=constant,
-            slope=slope,
-            x0=start_x,
-            dim_out=dim_out,
-        )
-        return out
+        pass
 
     return penalty
 

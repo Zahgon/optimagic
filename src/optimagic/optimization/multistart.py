@@ -1,15 +1,3 @@
-"""Functions for multi start optimization a la TikTak.
-
-TikTak (`Arnoud, Guvenen, and Kleineberg
-<https://www.nber.org/system/files/working_papers/w26340/w26340.pdf>`_)
-
- is an algorithm for solving global optimization problems. It performs local searches
-from a set of carefully-selected points in the parameter space.
-
-First implemented in Python by Alisdair McKay (
-`GitHub Repository <https://github.com/amckay/TikTak>`_)
-
-"""
 
 import warnings
 from dataclasses import dataclass, replace
@@ -57,7 +45,6 @@ def run_multistart_optimization(
             x=x,
             lower=sampling_bounds.lower,
             upper=sampling_bounds.upper,
-            # -1 because we add start parameters
             n_samples=options.n_samples - 1,
             distribution=options.sampling_distribution,
             method=options.sampling_method,
@@ -129,10 +116,7 @@ def run_multistart_optimization(
     batch_evaluator = options.batch_evaluator
 
     def single_optimization(x0, step_id):
-        """Closure for running a single optimization, given a starting point."""
-        problem = internal_problem.with_error_handling(error_handling)
-        res = local_algorithm.solve_internal_problem(problem, x0, step_id)
-        return res
+        pass
 
     opt_counter = 0
     for batch in batched_sample:
@@ -255,10 +239,6 @@ def _draw_exploration_sample(
             )
 
     if method == "sobol":
-        # Draw `n` points from the open interval (lower, upper)^d.
-        # Note that scipy uses the half-open interval [lower, upper)^d internally.
-        # We apply a burn-in phase of 1, i.e. we skip the first point in the sequence
-        # and thus exclude the lower bound.
         sampler = qmc.Sobol(d=len(lower), scramble=False, seed=seed)
         _ = sampler.fast_forward(1)
         sample_unscaled = sampler.random(n=n_samples)
@@ -290,14 +270,6 @@ def _draw_exploration_sample(
 
 @dataclass(frozen=True)
 class _InternalExplorationResult:
-    """Exploration result of the multistart optimization.
-
-    Attributes:
-        sorted_values: List of sorted function values.
-        sorted_sample: 2d numpy array where each row is the internal parameter
-            vector corresponding to the sorted function values.
-
-    """
 
     sorted_values: list[float]
     sorted_sample: NDArray[np.float64]
@@ -345,8 +317,6 @@ def run_explorations(
     valid_values = raw_values[is_valid]
     valid_sample = sample[is_valid]
 
-    # this sorts from low to high values; internal criterion and derivative took care
-    # of the sign switch.
     sorting_indices = np.argsort(valid_values)
 
     out = _InternalExplorationResult(
@@ -413,9 +383,6 @@ def update_convergence_state(
         bool: A bool that indicates if the optimizer has converged.
 
     """
-    # ==================================================================================
-    # unpack some variables
-    # ==================================================================================
     xtol = convergence_criteria["xtol"]
     max_discoveries = convergence_criteria["max_discoveries"]
 
@@ -423,26 +390,15 @@ def update_convergence_state(
     best_y = current_state["best_y"]
     best_res = current_state["best_res"]
 
-    # ==================================================================================
-    # filter out optimizations that raised errors
-    # ==================================================================================
-    # get indices of local optimizations that did not fail
     valid_indices = [i for i, res in enumerate(results) if not isinstance(res, str)]
 
-    # If all local optimizations failed, return early so we don't have to worry about
-    # index errors later.
     if not valid_indices:
         return current_state, False
-    # ==================================================================================
-    # reduce eveything to valid optimizations
-    # ==================================================================================
     valid_results = [results[i] for i in valid_indices]
     valid_starts = [starts[i] for i in valid_indices]
     valid_new_x = [res.x for res in valid_results]
     valid_new_y = []
 
-    # make the criterion output scalar if a least squares optimizer returns an
-    # array as solution_criterion.
     for res in valid_results:
         if np.isscalar(res.fun):
             fun = float(res.fun)
@@ -453,23 +409,14 @@ def update_convergence_state(
 
         valid_new_y.append(fun)
 
-    # ==================================================================================
-    # accept new best point if we find a new lowest function value
-    # ==================================================================================
     best_index = np.argmin(valid_new_y)
     if valid_new_y[best_index] <= best_y:
         best_x = valid_new_x[best_index]
         best_y = valid_new_y[best_index]
         best_res = valid_results[best_index]
-    # handle the case that the global optimum was found in the exploration sample and
-    # due to floating point imprecisions the result of the optimization that started at
-    # the global optimum is slightly worse
     elif best_res is None:
         best_res = valid_results[best_index]
 
-    # ==================================================================================
-    # update history and state
-    # ==================================================================================
     new_x_history = current_state["x_history"] + valid_new_x
     all_x = np.array(new_x_history)
     relative_diffs = (all_x - best_x) / np.clip(best_x, 0.1, np.inf)

@@ -1,17 +1,3 @@
-"""Resolve the selectors of user constraints to flat parameter positions.
-
-This is the first stage of constraints processing. Each user constraint selects a
-subset of the parameters via a selector function. Here, the selectors are evaluated
-on a helper pytree that has the same structure as the user provided params but
-contains the positions of the parameters in the flat parameter vector. The result is
-a list of resolved constraints (see :mod:`optimagic.constraints`) that refer to
-parameters by position and carry provenance information for error messages.
-
-The per-constraint resolution logic lives in the ``Constraint._resolve`` methods in
-:mod:`optimagic.constraints`. This module provides the loop over all constraints and
-the :class:`ResolutionContext` that the methods work with.
-
-"""
 
 from __future__ import annotations
 
@@ -47,16 +33,6 @@ from optimagic.typing import PyTree
 
 @dataclass(frozen=True)
 class ResolutionContext:
-    """Everything a constraint needs to resolve its selectors to flat positions.
-
-    Attributes:
-        helper: Pytree with the same structure as the user provided params whose
-            leaves are the positions of the parameters in the flat parameter vector.
-        registry: Pytree registry used to flatten selections on the helper tree.
-        param_names: Names of the flat parameters. Used for error messages.
-        source: Provenance of the constraint that is being resolved.
-
-    """
 
     helper: PyTree
     registry: dict[type, Any]

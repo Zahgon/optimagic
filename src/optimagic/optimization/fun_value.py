@@ -198,32 +198,7 @@ def enforce_return_type(
     def decorator_enforce(
         func: Callable[P, Scalar | PyTree | FunctionValue],
     ) -> Callable[P, SpecificFunctionValue]:
-        if problem_type == AggregationLevel.SCALAR:
-
-            @functools.wraps(func)
-            def wrapper_enforce(
-                *args: P.args, **kwargs: P.kwargs
-            ) -> ScalarFunctionValue:
-                raw = func(*args, **kwargs)
-                return _convert_output_to_scalar_function_value(raw)
-        elif problem_type == AggregationLevel.LEAST_SQUARES:
-
-            @functools.wraps(func)
-            def wrapper_enforce(
-                *args: P.args, **kwargs: P.kwargs
-            ) -> LeastSquaresFunctionValue:
-                raw = func(*args, **kwargs)
-                return _convert_output_to_least_squares_function_value(raw)
-        elif problem_type == AggregationLevel.LIKELIHOOD:
-
-            @functools.wraps(func)
-            def wrapper_enforce(
-                *args: P.args, **kwargs: P.kwargs
-            ) -> LikelihoodFunctionValue:
-                raw = func(*args, **kwargs)
-                return _convert_output_to_likelihood_function_value(raw)
-
-        return wrapper_enforce
+        pass
 
     return decorator_enforce
 
@@ -245,31 +220,6 @@ def enforce_return_type_with_jac(
     def decorator_enforce(
         func: Callable[P, tuple[Scalar | PyTree | FunctionValue, PyTree]],
     ) -> Callable[P, tuple[SpecificFunctionValue, PyTree]]:
-        if problem_type == AggregationLevel.SCALAR:
-
-            @functools.wraps(func)
-            def wrapper_enforce(
-                *args: P.args, **kwargs: P.kwargs
-            ) -> tuple[ScalarFunctionValue, PyTree]:
-                raw = func(*args, **kwargs)
-                return (_convert_output_to_scalar_function_value(raw[0]), raw[1])
-        elif problem_type == AggregationLevel.LEAST_SQUARES:
-
-            @functools.wraps(func)
-            def wrapper_enforce(
-                *args: P.args, **kwargs: P.kwargs
-            ) -> tuple[LeastSquaresFunctionValue, PyTree]:
-                raw = func(*args, **kwargs)
-                return (_convert_output_to_least_squares_function_value(raw[0]), raw[1])
-        elif problem_type == AggregationLevel.LIKELIHOOD:
-
-            @functools.wraps(func)
-            def wrapper_enforce(
-                *args: P.args, **kwargs: P.kwargs
-            ) -> tuple[LikelihoodFunctionValue, PyTree]:
-                raw = func(*args, **kwargs)
-                return (_convert_output_to_likelihood_function_value(raw[0]), raw[1])
-
-        return wrapper_enforce
+        pass
 
     return decorator_enforce

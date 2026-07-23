@@ -11,53 +11,10 @@ from optimagic.deprecations import replace_and_warn_about_deprecated_multistart_
 from optimagic.exceptions import InvalidMultistartError
 from optimagic.typing import BatchEvaluator, BatchEvaluatorLiteral, PyTree
 
-# ======================================================================================
-# Public Options
-# ======================================================================================
 
 
 @dataclass(frozen=True)
 class MultistartOptions:
-    """Multistart options in optimization problems.
-
-    Attributes:
-        n_samples: The number of points at which the objective function is evaluated
-            during the exploration phase. If None, n_samples is set to 100 times the
-            number of parameters.
-        stopping_maxopt: The maximum number of local optimizations to run. Defaults to
-            10% of n_samples. This number may not be reached if multistart converges
-            earlier.
-        sampling_distribution: The distribution from which the exploration sample is
-            drawn. Allowed are "uniform" and "triangular". Defaults to "uniform".
-        sampling_method: The method used to draw the exploration sample. Allowed are
-            "sobol", "random", "halton", and "latin_hypercube". Defaults to "random".
-        sample: A sequence of PyTrees or None. If None, a sample is drawn from the
-            sampling distribution.
-        mixing_weight_method: The method used to determine the mixing weight, i,e, how
-            start parameters for local optimizations are calculated. Allowed are
-            "tiktak" and "linear", or a custom callable. Defaults to "tiktak".
-        mixing_weight_bounds: The lower and upper bounds for the mixing weight.
-            Defaults to (0.1, 0.995).
-        convergence_max_discoveries: The maximum number of discoveries for convergence.
-            Determines after how many re-descoveries of the currently best local
-            optima the multistart algorithm stops. Defaults to 2.
-        convergence_xtol_rel: The relative tolerance in parameters
-            for convergence. Determines the maximum relative distance two parameter
-            vecctors can have to be considered equal. Defaults to 0.01.
-        n_cores: The number of cores to use for parallelization. Defaults to 1.
-        batch_evaluator: The evaluator to use for batch evaluation. Allowed are
-            "joblib", "pathos", and "threading", or a custom callable.
-        batch_size: The batch size for batch evaluation. Must be larger than n_cores
-            or None.
-        seed: The seed for the random number generator.
-        error_handling: The error handling for exploration and optimization errors.
-            Allowed are "raise" and "continue".
-
-    Raises:
-        InvalidMultistartError: If the multistart options cannot be processed, e.g.
-            because they do not have the correct type.
-
-    """
 
     n_samples: int | None = None
     stopping_maxopt: int | None = None
@@ -75,7 +32,6 @@ class MultistartOptions:
     batch_size: int | None = None
     seed: int | np.random.Generator | None = None
     error_handling: Literal["raise", "continue"] | None = None
-    # Deprecated attributes
     share_optimization: float | None = None
     convergence_relative_params_tolerance: float | None = None
     optimization_error_handling: Literal["raise", "continue"] | None = None
@@ -104,7 +60,6 @@ class MultistartOptionsDict(TypedDict):
     batch_size: NotRequired[int | None]
     seed: NotRequired[int | np.random.Generator | None]
     error_handling: NotRequired[Literal["raise", "continue"] | None]
-    # Deprecated attributes
     share_optimization: NotRequired[float | None]
     convergence_relative_params_tolerance: NotRequired[float | None]
     optimization_error_handling: NotRequired[Literal["raise", "continue"] | None]
@@ -152,135 +107,15 @@ def pre_process_multistart(
 
     if multistart is not None:
         multistart = replace_and_warn_about_deprecated_multistart_options(multistart)
-        # The replace and warn function cannot be typed due to circular imports, but
-        # we know that the return type is MultistartOptions
         multistart = cast(MultistartOptions, multistart)
 
     return multistart
 
 
 def _validate_attribute_types_and_values(options: MultistartOptions) -> None:
-    if options.n_samples is not None and (
-        not isinstance(options.n_samples, int) or options.n_samples < 1
-    ):
-        raise InvalidMultistartError(
-            f"Invalid number of samples: {options.n_samples}. Number of samples "
-            "must be a positive integer or None."
-        )
-
-    if options.stopping_maxopt is not None and (
-        not isinstance(options.stopping_maxopt, int) or options.stopping_maxopt < 0
-    ):
-        raise InvalidMultistartError(
-            f"Invalid number of optimizations: {options.stopping_maxopt}. Number of "
-            "optimizations must be a positive integer or None."
-        )
-
-    if (
-        options.n_samples is not None
-        and options.stopping_maxopt is not None
-        and options.n_samples < options.stopping_maxopt
-    ):
-        raise InvalidMultistartError(
-            f"Invalid number of samples: {options.n_samples}. Number of samples "
-            "must be at least as large as the number of optimizations."
-        )
-
-    if options.sampling_distribution not in ("uniform", "triangular"):
-        raise InvalidMultistartError(
-            f"Invalid sampling distribution: {options.sampling_distribution}. Sampling "
-            f"distribution must be one of ('uniform', 'triangular')."
-        )
-
-    if options.sampling_method not in ("sobol", "random", "halton", "latin_hypercube"):
-        raise InvalidMultistartError(
-            f"Invalid sampling method: {options.sampling_method}. Sampling method "
-            f"must be one of ('sobol', 'random', 'halton', 'latin_hypercube')."
-        )
-
-    if not isinstance(options.sample, Sequence | None):
-        raise InvalidMultistartError(
-            f"Invalid sample: {options.sample}. Sample must be a sequence of "
-            "parameters."
-        )
-
-    if not callable(
-        options.mixing_weight_method
-    ) and options.mixing_weight_method not in ("tiktak", "linear"):
-        raise InvalidMultistartError(
-            f"Invalid mixing weight method: {options.mixing_weight_method}. Mixing "
-            "weight method must be Callable or one of ('tiktak', 'linear')."
-        )
-
-    if (
-        not isinstance(options.mixing_weight_bounds, tuple)
-        or len(options.mixing_weight_bounds) != 2
-        or not set(type(x) for x in options.mixing_weight_bounds) <= {int, float}
-    ):
-        raise InvalidMultistartError(
-            f"Invalid mixing weight bounds: {options.mixing_weight_bounds}. Mixing "
-            "weight bounds must be a tuple of two numbers."
-        )
-
-    if options.convergence_xtol_rel is not None and (
-        not isinstance(options.convergence_xtol_rel, int | float)
-        or options.convergence_xtol_rel < 0
-    ):
-        raise InvalidMultistartError(
-            "Invalid relative params tolerance:"
-            f"{options.convergence_xtol_rel}. Relative params "
-            "tolerance must be a number."
-        )
-
-    if (
-        not isinstance(options.convergence_max_discoveries, int | float)
-        or options.convergence_max_discoveries < 1
-    ):
-        raise InvalidMultistartError(
-            f"Invalid max discoveries: {options.convergence_max_discoveries}. Max "
-            "discoveries must be a positive integer or infinity."
-        )
-
-    if not isinstance(options.n_cores, int) or options.n_cores < 1:
-        raise InvalidMultistartError(
-            f"Invalid number of cores: {options.n_cores}. Number of cores "
-            "must be a positive integer."
-        )
-
-    try:
-        process_batch_evaluator(options.batch_evaluator)
-    except Exception as e:
-        raise InvalidMultistartError(
-            f"Invalid batch evaluator: {options.batch_evaluator}."
-        ) from e
-
-    if options.batch_size is not None and (
-        not isinstance(options.batch_size, int) or options.batch_size < options.n_cores
-    ):
-        raise InvalidMultistartError(
-            f"Invalid batch size: {options.batch_size}. Batch size "
-            "must be a positive integer larger than n_cores, or None."
-        )
-
-    if not isinstance(options.seed, int | np.random.Generator | None):
-        raise InvalidMultistartError(
-            f"Invalid seed: {options.seed}. Seed "
-            "must be an integer, a numpy random generator, or None."
-        )
-
-    if options.error_handling is not None and options.error_handling not in (
-        "raise",
-        "continue",
-    ):
-        raise InvalidMultistartError(
-            f"Invalid error handling: {options.error_handling}. Error handling must be "
-            "'raise' or 'continue'."
-        )
+    pass
 
 
-# ======================================================================================
-# Internal Options
-# ======================================================================================
 
 
 def _tiktak_weights(
@@ -305,13 +140,6 @@ WEIGHT_FUNCTIONS = {
 
 @dataclass(frozen=True)
 class InternalMultistartOptions:
-    """Multistart options used internally in optimagic.
-
-    Compared to `MultistartOptions`, this data class has stricter types and combines
-    some of the attributes. It is generated at runtime using a `MultistartOptions`
-    instance and the function `get_internal_multistart_options_from_public`.
-
-    """
 
     n_samples: int
     weight_func: Callable[[int, int], float]
@@ -402,7 +230,6 @@ def get_internal_multistart_options_from_public(
     else:
         stopping_maxopt = options.stopping_maxopt
 
-    # Set defaults resulting from deprecated attributes
     if options.error_handling is not None:
         error_handling = options.error_handling
     else:
@@ -414,13 +241,11 @@ def get_internal_multistart_options_from_public(
         convergence_xtol_rel = 0.01
 
     return InternalMultistartOptions(
-        # Attributes taken directly from MultistartOptions
         convergence_max_discoveries=options.convergence_max_discoveries,
         n_cores=options.n_cores,
         sampling_distribution=options.sampling_distribution,
         sampling_method=options.sampling_method,
         seed=options.seed,
-        # Updated attributes
         sample=sample,
         n_samples=n_samples,
         weight_func=weight_func,

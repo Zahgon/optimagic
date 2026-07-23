@@ -28,49 +28,19 @@ from optimagic.typing import BatchEvaluatorLiteral, PyTree
 
 @dataclass(frozen=True)
 class NumdiffResult:
-    """Result of a numerical differentiation.
-
-    The following relationship holds for vector-valued functions with vector-valued
-    parameters:
-
-    First Derivative:
-    -----------------
-
-    - f: R -> R leads to shape (1,), usually called derivative
-    - f: R^m -> R leads to shape (m, ), usually called Gradient
-    - f: R -> R^n leads to shape (n, 1), usually called Jacobian
-    - f: R^m -> R^n leads to shape (n, m), usually called Jacobian
-
-    Second Derivative:
-    ------------------
-
-    - f: R -> R leads to shape (1,), usually called second derivative
-    - f: R^m -> R leads to shape (m, m), usually called Hessian
-    - f: R -> R^n leads to shape (n,), usually called Hessian
-    - f: R^m -> R^n leads to shape (n, m, m), usually called Hessian tensor
-
-    Attributes:
-        derivative: The estimated derivative at the parameters. The structure of the
-            derivative depends on the input parameters and the output of the function.
-        func_value: The value of the function at the parameters.
-
-    """
 
     derivative: PyTree
     func_value: PyTree | None = None
-    # deprecated
     _func_evals: pd.DataFrame | dict[str, pd.DataFrame | None] | None = None
     _derivative_candidates: pd.DataFrame | None = None
 
     @property
     def func_evals(self) -> pd.DataFrame | dict[str, pd.DataFrame | None] | None:
-        deprecations.throw_numdiff_result_func_evals_future_warning()
-        return self._func_evals
+        pass
 
     @property
     def derivative_candidates(self) -> pd.DataFrame | None:
-        deprecations.throw_numdiff_result_derivative_candidates_future_warning()
-        return self._derivative_candidates
+        pass
 
     def __getitem__(self, key: str) -> Any:
         deprecations.throw_dict_access_future_warning(key, obj_name=type(self).__name__)
@@ -97,7 +67,6 @@ def first_derivative(
     error_handling: Literal["continue", "raise", "raise_strict"] = "continue",
     batch_evaluator: BatchEvaluatorLiteral | Callable = "joblib",
     unpacker: Callable[[Any], PyTree] | None = None,
-    # deprecated
     lower_bounds: PyTree | None = None,
     upper_bounds: PyTree | None = None,
     base_steps: PyTree | None = None,
@@ -167,9 +136,6 @@ def first_derivative(
         NumdiffResult: A numerical differentiation result.
 
     """
-    # ==================================================================================
-    # handle deprecations
-    # ==================================================================================
     bounds = replace_and_warn_about_deprecated_bounds(
         lower_bounds=lower_bounds,
         upper_bounds=upper_bounds,
@@ -206,14 +172,10 @@ def first_derivative(
     else:
         return_func_value = True
 
-    # ==================================================================================
 
     bounds = pre_process_bounds(bounds)
     unpacker = _process_unpacker(unpacker)
 
-    # ==================================================================================
-    # Convert scalar | pytree arguments to 1d arrays of floats
-    # ==================================================================================
     registry = get_registry(extended=True)
 
     is_fast_path = _is_1d_array(params)
@@ -241,14 +203,12 @@ def first_derivative(
     min_steps = _process_scalar_or_array_argument(min_steps, x, "min_steps")
     step_size = _process_scalar_or_array_argument(step_size, x, "step_size")
 
-    # ==================================================================================
 
     if np.isnan(x).any():
         raise ValueError("The parameter vector must not contain NaNs.")
 
     internal_lb, internal_ub = get_internal_bounds(params, bounds=bounds)
 
-    # handle kwargs
     func_kwargs = {} if func_kwargs is None else func_kwargs
     partialed_func = functools.partial(func, **func_kwargs)
 
@@ -256,7 +216,6 @@ def first_derivative(
     if method not in implemented_methods:
         raise ValueError(f"Method has to be in {implemented_methods}.")
 
-    # generate the step array
     step_size = generate_steps(
         x=x,
         method=method,
@@ -270,7 +229,6 @@ def first_derivative(
     )
     step_size = cast(NDArray[np.float64], step_size)
 
-    # generate parameter vectors at which func has to be evaluated as numpy arrays
     evaluation_points = []
     for step_arr in step_size:
         for i, j in product(range(n_steps), range(len(x))):
@@ -281,20 +239,15 @@ def first_derivative(
                 point[j] += step_arr[i, j]
                 evaluation_points.append(point)
 
-    # convert the numpy arrays to whatever is needed by func
     if not is_fast_path:
         evaluation_points = [
-            # entries are either a numpy.ndarray or np.nan
             _unflatten_if_not_nan(p, params_treedef, registry)
             for p in evaluation_points
         ]
 
-    # we always evaluate f0, so we can fall back to one-sided derivatives if
-    # two-sided derivatives fail. The extra cost is negligible in most cases.
     if f0 is None:
         evaluation_points.append(params)
 
-    # do the function evaluations, including error handling
     batch_error_handling = "raise" if error_handling == "raise_strict" else "continue"
     raw_evals = _nan_skipping_batch_evaluator(
         func=partialed_func,
@@ -304,12 +257,9 @@ def first_derivative(
         batch_evaluator=batch_evaluator,
     )
 
-    # extract information on exceptions that occurred during function evaluations
     exc_info = "\n\n".join([val for val in raw_evals if isinstance(val, str)])
     raw_evals = [val if not isinstance(val, str) else np.nan for val in raw_evals]
 
-    # store full function value at params as func_value and a processed version of it
-    # that we need to calculate derivatives as f0
     if f0 is None:
         f0 = raw_evals[-1]
         raw_evals = raw_evals[:-1]
@@ -327,7 +277,6 @@ def first_derivative(
         f0 = tree_leaves(f0_tree, registry=registry)
         f0 = np.array(f0, dtype=np.float64)
 
-    # convert the raw evaluations to numpy arrays
     raw_evals_arr = _convert_evals_to_numpy(
         raw_evals=raw_evals,
         unpacker=unpacker,
@@ -336,7 +285,6 @@ def first_derivative(
         is_vector_out=vector_out,
     )
 
-    # apply finite difference formulae
     evals_data = np.array(raw_evals_arr).reshape(2, n_steps, len(x), -1)
     evals_data_transposed = np.transpose(evals_data, axes=(0, 1, 3, 2))
     evals = Evals(pos=evals_data_transposed[0], neg=evals_data_transposed[1])
@@ -345,8 +293,6 @@ def first_derivative(
     for m in ["forward", "backward", "central"]:
         jac_candidates[m] = finite_differences.jacobian(evals, step_size, f0, m)
 
-    # get the best derivative estimate out of all derivative estimates that could be
-    # calculated, given the function evaluations.
     orders = {
         "central": ["central", "forward", "backward"],
         "forward": ["forward", "backward"],
@@ -362,11 +308,9 @@ def first_derivative(
         )
         jac, updated_candidates = _consolidate_extrapolated(richardson_candidates)
 
-    # raise error if necessary
     if error_handling in ("raise", "raise_strict") and np.isnan(jac).any():
         raise Exception(exc_info)
 
-    # results processing
     if is_fast_path and vector_out:
         derivative = jac
     elif is_fast_path and scalar_out:
@@ -402,7 +346,6 @@ def second_derivative(
     error_handling: Literal["continue", "raise", "raise_strict"] = "continue",
     batch_evaluator: BatchEvaluatorLiteral | Callable = "joblib",
     unpacker: Callable[[Any], PyTree] | None = None,
-    # deprecated
     lower_bounds: PyTree | None = None,
     upper_bounds: PyTree | None = None,
     base_steps: PyTree | None = None,
@@ -483,9 +426,6 @@ def second_derivative(
         NumdiffResult: A numerical differentiation result.
 
     """
-    # ==================================================================================
-    # handle deprecations
-    # ==================================================================================
     bounds = replace_and_warn_about_deprecated_bounds(
         lower_bounds=lower_bounds,
         upper_bounds=upper_bounds,
@@ -522,13 +462,9 @@ def second_derivative(
         if unpacker is None:
             unpacker = lambda x: x[key]
 
-    # ==================================================================================
     bounds = pre_process_bounds(bounds)
     unpacker = _process_unpacker(unpacker)
 
-    # ==================================================================================
-    # Convert scalar | pytree arguments to 1d arrays of floats
-    # ==================================================================================
     registry = get_registry(extended=True)
 
     is_fast_path = _is_1d_array(params)
@@ -556,13 +492,11 @@ def second_derivative(
     min_steps = _process_scalar_or_array_argument(min_steps, x, "min_steps")
     step_size = _process_scalar_or_array_argument(step_size, x, "step_size")
 
-    # ==================================================================================
 
     unpacker = _process_unpacker(unpacker)
 
     internal_lb, internal_ub = get_internal_bounds(params, bounds=bounds)
 
-    # handle kwargs
     func_kwargs = {} if func_kwargs is None else func_kwargs
     partialed_func = functools.partial(func, **func_kwargs)
 
@@ -570,7 +504,6 @@ def second_derivative(
     if method not in implemented_methods:
         raise ValueError(f"Method has to be in {implemented_methods}.")
 
-    # generate the step array
     step_size = generate_steps(
         x=x,
         method=("central" if "central" in method else method),
@@ -584,14 +517,12 @@ def second_derivative(
     )
     step_size = cast(NDArray[np.float64], step_size)
 
-    # generate parameter vectors at which func has to be evaluated as numpy arrays
     evaluation_points = {  # type: ignore
         "one_step": [],
         "two_step": [],
         "cross_step": [],
     }
     for step_arr in step_size:
-        # single direction steps
         for i, j in product(range(n_steps), range(len(x))):
             if np.isnan(step_arr[i, j]):
                 evaluation_points["one_step"].append(np.nan)
@@ -599,7 +530,6 @@ def second_derivative(
                 point = x.copy()
                 point[j] += step_arr[i, j]
                 evaluation_points["one_step"].append(point)
-        # two and cross direction steps
         for i, j, k in product(range(n_steps), range(len(x)), range(len(x))):
             if j > k or np.isnan(step_arr[i, j]) or np.isnan(step_arr[i, k]):
                 evaluation_points["two_step"].append(np.nan)
@@ -617,22 +547,17 @@ def second_derivative(
                     point[k] -= step_arr[i, k]
                     evaluation_points["cross_step"].append(point)
 
-    # convert the numpy arrays to whatever is needed by func
     if not is_fast_path:
         evaluation_points = {
-            # entries are either a numpy.ndarray or np.nan, we unflatten only
             step_type: [
                 _unflatten_if_not_nan(p, params_treedef, registry) for p in points
             ]
             for step_type, points in evaluation_points.items()
         }
 
-    # we always evaluate f0, so we can fall back to one-sided derivatives if
-    # two-sided derivatives fail. The extra cost is negligible in most cases.
     if f0 is None:
         evaluation_points["one_step"].append(params)
 
-    # do the function evaluations for one and two step, including error handling
     batch_error_handling = "raise" if error_handling == "raise_strict" else "continue"
     raw_evals = _nan_skipping_batch_evaluator(
         func=partialed_func,
@@ -642,7 +567,6 @@ def second_derivative(
         batch_evaluator=batch_evaluator,
     )
 
-    # extract information on exceptions that occurred during function evaluations
     exc_info = "\n\n".join([val for val in raw_evals if isinstance(val, str)])
     raw_evals = [val if not isinstance(val, str) else np.nan for val in raw_evals]
 
@@ -653,8 +577,6 @@ def second_derivative(
         "cross_step": raw_evals[n_two_step + n_one_step :],
     }
 
-    # store full function value at params as func_value and a processed version of it
-    # that we need to calculate derivatives as f0
     if f0 is None:
         f0 = raw_evals["one_step"][-1]
         raw_evals["one_step"] = raw_evals["one_step"][:-1]
@@ -664,7 +586,6 @@ def second_derivative(
     f0 = tree_leaves(f0_tree, registry=registry)
     f0 = np.array(f0, dtype=np.float64)
 
-    # convert the raw evaluations to numpy arrays
     raw_evals = {
         step_type: _convert_evals_to_numpy(
             raw_evals=evals, unpacker=unpacker, registry=registry
@@ -672,8 +593,6 @@ def second_derivative(
         for step_type, evals in raw_evals.items()
     }
 
-    # reshape arrays into dimension (n_steps, dim_f, dim_x) or (n_steps, dim_f, dim_x,
-    # dim_x) for finite differences
     evals = {}
     evals["one_step"] = _reshape_one_step_evals(raw_evals["one_step"], n_steps, len(x))
     evals["two_step"] = _reshape_two_step_evals(raw_evals["two_step"], n_steps, len(x))
@@ -681,13 +600,10 @@ def second_derivative(
         raw_evals["cross_step"], n_steps, len(x), f0
     )
 
-    # apply finite difference formulae
     hess_candidates = {}
     for m in ["forward", "backward", "central_average", "central_cross"]:
         hess_candidates[m] = finite_differences.hessian(evals, step_size, f0, m)
 
-    # get the best derivative estimate out of all derivative estimates that could be
-    # calculated, given the function evaluations.
     orders = {
         "central_cross": ["central_cross", "central_average", "forward", "backward"],
         "central_average": ["central_average", "central_cross", "forward", "backward"],
@@ -703,11 +619,9 @@ def second_derivative(
             "Richardson extrapolation is not implemented for the second derivative yet."
         )
 
-    # raise error if necessary
     if error_handling in ("raise", "raise_strict") and np.isnan(hess).any():
         raise Exception(exc_info)
 
-    # results processing
     derivative = hessian_to_block_tree(hess, f0_tree, params)
 
     result = {"derivative": derivative}
@@ -930,10 +844,8 @@ def _convert_evals_to_numpy(
     evals only contain numpy arrays.
 
     """
-    # get rid of additional output
     evals = [unpacker(val) for val in raw_evals]
 
-    # convert pytrees to arrays
     if is_scalar_out:
         evals = [
             np.array([val], dtype=float) if not _is_scalar_nan(val) else val
@@ -952,14 +864,12 @@ def _convert_evals_to_numpy(
             for val in evals
         ]
 
-    # find out the correct output shape
     try:
         array = next(x for x in evals if hasattr(x, "shape") or isinstance(x, dict))
         out_shape = array.shape
     except StopIteration:
         out_shape = "scalar"
 
-    # convert to correct output shape
     if out_shape == "scalar":
         evals = [np.atleast_1d(val) for val in evals]
     else:
@@ -1011,7 +921,6 @@ def _consolidate_extrapolated(candidates):
         candidate_err_dict (dict): Errors corresponding to best derivatives given method
 
     """
-    # first find minimum over steps for each method
     candidate_der_dict = {}
     candidate_err_dict = {}
 
@@ -1022,7 +931,6 @@ def _consolidate_extrapolated(candidates):
         candidate_der_dict[key] = derivative
         candidate_err_dict[key] = error
 
-    # second find minimum over methods
     candidate_der = np.stack(list(candidate_der_dict.values()))
     candidate_err = np.stack(list(candidate_err_dict.values()))
     consolidated, _ = _select_minimizer_along_axis(candidate_der, candidate_err)
@@ -1126,24 +1034,20 @@ def _nan_skipping_batch_evaluator(
         evaluations (list): The function evaluations, same length as arguments.
 
     """
-    # extract information
     nan_indices = {
         i for i, arg in enumerate(arguments) if isinstance(arg, float) and np.isnan(arg)
     }
     real_args = [arg for i, arg in enumerate(arguments) if i not in nan_indices]
 
-    # get the batch evaluator if it was provided as string
     if not callable(batch_evaluator):
         batch_evaluator = getattr(
             batch_evaluators, f"{batch_evaluator}_batch_evaluator"
         )
 
-    # evaluate functions
     evaluations = batch_evaluator(
         func=func, arguments=real_args, n_cores=n_cores, error_handling=error_handling
     )
 
-    # combine results
     evaluations = iter(evaluations)
     results = []
     for i in range(len(arguments)):
@@ -1178,7 +1082,6 @@ def _split_into_str_and_int(s):
 def _collect_additional_info(steps, evals, updated_candidates, target):
     """Combine additional information in dict if return_info is True."""
     info = {}
-    # save function evaluations to accessible data frame
     if target == "first_derivative":
         func_evals = _convert_evaluation_data_to_frame(steps, evals)
         info["_func_evals"] = func_evals
@@ -1191,7 +1094,6 @@ def _collect_additional_info(steps, evals, updated_candidates, target):
         }
 
     if updated_candidates is not None:
-        # combine derivative candidates in accessible data frame
         derivative_candidates = _convert_richardson_candidates_to_frame(
             *updated_candidates
         )

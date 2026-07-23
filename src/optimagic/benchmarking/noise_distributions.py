@@ -2,29 +2,23 @@ import numpy as np
 
 
 def _standard_logistic(size, rng):
-    scale = np.sqrt(3) / np.pi
-    return rng.logistic(loc=0, scale=scale, size=size)
+    pass
 
 
 def _standard_uniform(size, rng):
-    ub = np.sqrt(3)
-    lb = -ub
-    return rng.uniform(lb, ub, size=size)
+    pass
 
 
 def _standard_normal(size, rng):
-    return rng.normal(size=size)
+    pass
 
 
 def _standard_gumbel(size, rng):
-    gamma = 0.577215664901532
-    scale = np.sqrt(6) / np.pi
-    loc = -scale * gamma
-    return rng.gumbel(loc=loc, scale=scale, size=size)
+    pass
 
 
 def _standard_laplace(size, rng):
-    return rng.laplace(scale=np.sqrt(0.5), size=size)
+    pass
 
 
 NOISE_DISTRIBUTIONS = {

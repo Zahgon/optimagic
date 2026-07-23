@@ -1,4 +1,3 @@
-"""Implement PyGAD genetic algorithm optimizer."""
 
 from __future__ import annotations
 
@@ -41,19 +40,6 @@ from optimagic.typing import (
 
 @runtime_checkable
 class ParentSelectionFunction(Protocol):
-    """Protocol for user-defined parent selection functions.
-
-    Args:
-        fitness: Array of fitness values for all solutions in the population.
-        num_parents: Number of parents to select.
-        ga_instance: The PyGAD GA instance.
-
-    Returns:
-        Tuple of (selected_parents, parent_indices) where:
-        - selected_parents: 2D array of selected parent solutions
-        - parent_indices: 1D array of indices of selected parents
-
-    """
 
     def __call__(
         self, fitness: NDArray[np.float64], num_parents: int, ga_instance: Any
@@ -62,18 +48,6 @@ class ParentSelectionFunction(Protocol):
 
 @runtime_checkable
 class CrossoverFunction(Protocol):
-    """Protocol for user-defined crossover functions.
-
-    Args:
-        parents: 2D array of parent solutions selected for mating.
-        offspring_size: Tuple (num_offspring, num_genes) specifying the shape
-            of the offspring population to be generated.
-        ga_instance: The PyGAD GA instance.
-
-    Returns:
-        2D array of offspring solutions generated from the parents.
-
-    """
 
     def __call__(
         self,
@@ -85,16 +59,6 @@ class CrossoverFunction(Protocol):
 
 @runtime_checkable
 class MutationFunction(Protocol):
-    """Protocol for user-defined mutation functions.
-
-    Args:
-        offspring: 2D array of offspring solutions to be mutated.
-        ga_instance: The PyGAD GA instance.
-
-    Returns:
-        2D array of mutated offspring solutions.
-
-    """
 
     def __call__(
         self, offspring: NDArray[np.float64], ga_instance: Any
@@ -103,23 +67,6 @@ class MutationFunction(Protocol):
 
 @runtime_checkable
 class GeneConstraintFunction(Protocol):
-    """Protocol for user-defined gene constraint functions.
-
-    Gene constraint functions are applied to individual genes to enforce
-    specific constraints on their values. Each function receives the current
-    solution and a list of candidate values, then returns the constrained
-    values.
-
-    Args:
-        solution: Current solution array containing all gene values.
-        values: List or array of candidate values for the gene being
-            constrained.
-
-    Returns:
-        Constrained values as a list or array, ensuring they satisfy the
-        gene's specific constraints.
-
-    """
 
     def __call__(
         self,
@@ -130,16 +77,6 @@ class GeneConstraintFunction(Protocol):
 
 @dataclass(frozen=True)
 class _BuiltinMutation:
-    """Base class for all built-in PyGAD mutation configurations.
-
-    Note:
-        This is an internal base class. Users should not inherit from it
-        directly. To configure a built-in mutation, use one of its subclasses
-        (e.g., `RandomMutation`, `AdaptiveMutation`). To define a custom
-        mutation, provide a function that conforms to the `MutationFunction`
-        protocol.
-
-    """
 
     mutation_type: ClassVar[str] = "random"
 
@@ -164,21 +101,6 @@ class _BuiltinMutation:
 
 @dataclass(frozen=True)
 class RandomMutation(_BuiltinMutation):
-    """Configuration for the random mutation in PyGAD.
-
-    The random mutation selects a subset of genes in each solution and either
-    replaces each selected gene with a new random value or adds a random value
-    to it.
-
-    The exact behavior depends on the `by_replacement` parameter: If
-    `by_replacement` is True, the selected genes are replaced with new values;
-    if False, random values are added to the existing gene values.
-
-    The mutation rate is determined by the mutation probability, the number of
-    genes, or the percentage of genes (with priority: probability > num_genes
-    > percent_genes).
-
-    """
 
     mutation_type: ClassVar[str] = "random"
 
@@ -226,70 +148,24 @@ class RandomMutation(_BuiltinMutation):
 
 @dataclass(frozen=True)
 class SwapMutation(_BuiltinMutation):
-    """Configuration for the swap mutation in PyGAD.
-
-    The swap mutation selects two random genes and exchanges their values. This
-    operation maintains all gene values, altering only their positions within the
-    chromosome.
-
-    No additional parameters are required for this mutation type.
-
-    """
 
     mutation_type: ClassVar[str] = "swap"
 
 
 @dataclass(frozen=True)
 class InversionMutation(_BuiltinMutation):
-    """Configuration for the inversion mutation in PyGAD.
-
-    The inversion mutation selects a contiguous segment of genes and reverses their
-    order. All gene values remain unchanged; only the ordering within the selected
-    segment is altered.
-
-    No additional parameters are required for this mutation type.
-
-    """
 
     mutation_type: ClassVar[str] = "inversion"
 
 
 @dataclass(frozen=True)
 class ScrambleMutation(_BuiltinMutation):
-    """Configuration for the scramble mutation in PyGAD.
-
-    The scramble mutation randomly shuffles the genes within a contiguous segment. This
-    preserves gene values but changes their order within the chosen segment.
-
-    No additional parameters are required for this mutation type.
-
-    """
 
     mutation_type: ClassVar[str] = "scramble"
 
 
 @dataclass(frozen=True)
 class AdaptiveMutation(_BuiltinMutation):
-    """Configuration for the adaptive mutation in PyGAD.
-
-    The adaptive mutation dynamically adjusts the mutation rate based on
-    solution quality. Solutions whose objective value is worse than the
-    current population median receive a higher mutation rate to encourage
-    exploration, while better-than-median solutions receive a lower rate
-    to preserve promising traits.
-
-    If no mutation rate parameters are specified, this mutation defaults to using
-    probabilities, with a 10% rate for bad solutions (`probability_bad=0.1`)
-    and a 5% rate for good solutions (`probability_good=0.05`).
-
-    **Parameter Precedence:**
-    The mutation rate is determined by the first set of parameters found, in the
-    following order of priority:
-    1. `probability_bad` and `probability_good`
-    2. `num_genes_bad` and `num_genes_good`
-    3. `percent_genes_bad` and `percent_genes_good`
-
-    """
 
     mutation_type: ClassVar[str] = "adaptive"
 
@@ -392,26 +268,6 @@ class AdaptiveMutation(_BuiltinMutation):
 )
 @dataclass(frozen=True)
 class Pygad(Algorithm):
-    """Minimize a scalar function using the PyGAD genetic algorithm.
-
-    This optimizer wraps the PyGAD genetic algorithm package :cite:`gad2023pygad`,
-    a population-based evolutionary method for global optimization. It maintains a
-    population of candidate solutions and evolves them over generations using
-    biologically inspired operations: selection (choosing parents based on fitness),
-    crossover (combining genes from parents), and mutation (introducing random
-    variations).
-
-    The algorithm is well-suited for global optimization problems with multiple local
-    optima, black-box optimization where gradients are unavailable or difficult to
-    compute.
-
-    All variables must have finite bounds. Parallel fitness evaluation is supported via
-    batch processing.
-
-    For more details, see the
-    `PyGAD documentation <https://pygad.readthedocs.io/en/latest/>`_.
-
-    """
 
     population_size: PositiveInt | None = None
     """Number of solutions in each generation.
@@ -624,7 +480,6 @@ class Pygad(Algorithm):
         ):
             raise ValueError("pygad requires finite bounds for all parameters.")
 
-        # Determine effective batch_size for parallel processing
         effective_batch_size = _determine_effective_batch_size(
             self.batch_size, self.n_cores
         )
@@ -640,17 +495,7 @@ class Pygad(Algorithm):
                 batch_solutions: NDArray[np.float64],
                 _batch_indices: list[int] | NDArray[np.int_],
             ) -> list[float]:
-                solutions_list: list[NDArray[np.float64]] = [
-                    np.asarray(batch_solutions[i])
-                    for i in range(batch_solutions.shape[0])
-                ]
-                batch_results = problem.batch_fun(
-                    solutions_list,
-                    n_cores=self.n_cores,
-                    batch_size=effective_batch_size,
-                )
-
-                return [-float(result) for result in batch_results]
+                pass
 
             fitness_function: Any = _fitness_func_batch
         else:
@@ -658,7 +503,7 @@ class Pygad(Algorithm):
             def _fitness_func_single(
                 _ga_instance: Any, solution: NDArray[np.float64], _solution_idx: int
             ) -> float:
-                return -float(problem.fun(solution))
+                pass
 
             fitness_function = _fitness_func_single
 
@@ -695,10 +540,8 @@ class Pygad(Algorithm):
             for i in range(len(x0))
         ]
 
-        # Convert mutation parameter to PyGAD parameters
         mutation_params = _convert_mutation_to_pygad_params(self.mutation)
 
-        # Build stop criteria from convergence parameters
         stop_criteria = _build_stop_criteria(
             self.convergence_target_value,
             self.convergence_generations_noimprove,
